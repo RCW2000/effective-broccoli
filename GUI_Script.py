@@ -1,4 +1,6 @@
 import PySimpleGUI as sg
+
+sg.theme('BrightColors')
 #tab menues
 #Part1
 """
@@ -14,9 +16,11 @@ p1_tab=[
     ])],
 
     [sg.Frame('Discretization', layout=[
-        [sg.Button('Calculate Median')],
-        [sg.Text()],#median value
-        [sg.Button('Run (Entropy-Based)')]
+        [sg.Button('Calculate Median'),sg.Text()],#median value
+        [sg.Text('Enter Threshold Value')],
+        [sg.Input()],
+        [sg.Button('Run (Entropy-Based)')],
+        [sg.Button('Show Discretized Data')]#popup
     ])]
 ]
 #Part2
@@ -91,7 +95,7 @@ p3_tab=[
 #The control panel (tab group)
 left=[
     [sg.TabGroup([
-        [sg.Tab('Part 1',p1_tab,background_color='BLUE'),sg.Tab('Part 2',p2_tab,background_color='RED'),sg.Tab('Part 3',p3_tab,background_color='YELLOW')]
+        [sg.Tab('Part 1',p1_tab,background_color='CYAN'),sg.Tab('Part 2',p2_tab,background_color='tomato'),sg.Tab('Part 3',p3_tab,background_color='YELLOW')]
     ])]
 ]
 #anything dealing with data loading, downloading
@@ -114,7 +118,7 @@ frequent itemsets + removal items, show rules in plain english , format 1 and fo
 prediction (format 1 rules, prediction matrix, correct prediction calculation)
 """
 right=[
-    [sg.Button('Original Data'), sg.Button('Training Set'),sg.Button('Testing Set'), sg.Button('Association Report'), sg.Button('Prediction Rebort')],
+    [sg.Button('Original Data'), sg.Button('Discretized Data'),sg.Button('Training Set'),sg.Button('Testing Set'), sg.Button('Association Report'), sg.Button('Prediction Report')],
     [sg.Canvas(size=(800,800))]
 ]
 
