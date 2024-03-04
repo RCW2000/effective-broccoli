@@ -11,16 +11,16 @@ Threshold Selector (median vs value)
 """
 p1_tab=[
     [sg.Frame('Outliers', layout=[
-        [sg.Button('Identify Outliers')],
-        [sg.Button('Remove Outliers')] #removal popup
+        [sg.Button('Identify Outliers',key='p1B0')],
+        [sg.Button('Remove Outliers',key='p1B1')] #removal popup
     ])],
 
     [sg.Frame('Discretization', layout=[
-        [sg.Button('Calculate Median'),sg.Text()],#median value
+        [sg.Button('Calculate Median',key='p1B2'),sg.Text(key='p1T0')],#median value
         [sg.Text('Enter Threshold Value')],
-        [sg.Input()],
-        [sg.Button('Run (Entropy-Based)')],
-        [sg.Button('Show Discretized Data')]#popup
+        [sg.Input(key='p1I0')],
+        [sg.Button('Run (Entropy-Based)',key='p1B3')],
+        [sg.Button('Show Discretized Data',key='p1B4')]#popup
     ])]
 ]
 #Part2
@@ -37,39 +37,39 @@ format 1 and format 2 lists
 p2_tab=[
     [sg.Frame('Data Split', layout=[
         [sg.Text('Enter Training Set Filename')],
-        [sg.Input()],
+        [sg.Input(key='p2I0')],
         [sg.Text('Enter Testing Set Filename')],
-        [sg.Input()],
-        [sg.Button('Run Train/Test Split')],
-        [sg.Button('Download Data')]
+        [sg.Input(key='p2I1')],
+        [sg.Button('Run Train/Test Split',key='p2B0')],
+        [sg.Button('Download Data',key='p2B1')]
     ])],
 
     [sg.Frame('Redundancies', layout=[
-        [sg.Text()],#train set filename
+        [sg.Text(key='p2T0')],#train set filename
         [sg.Text('Enter Correlation Threshold')],
-        [sg.Input()],
-        [sg.Button('Identify Redundancies')],
-        [sg.Button('Show Correlation Matrix')],
-        [sg.Button('Remove Highly Correlated Attributes')]#removal value
+        [sg.Input(key='p2I2')],
+        [sg.Button('Identify Redundancies',key='p2B2')],
+        [sg.Button('Show Correlation Matrix',key='p2B3')],
+        [sg.Button('Remove Highly Correlated Attributes',key='p2B4')]#removal value
     ])],
 
     [sg.Frame('Associations', layout=[
         [sg.Text('Enter Confidence Treshold')],
-        [sg.Input()],
-        [sg.Button('Generate Rules')],
-        [sg.Button('Show Unnamed Discrete Value Table')],
-        [sg.Button('Show Named Discrete Value Table')],
-        [sg.Button('Show Identified Frequent Itemsets')],
-        [sg.Button('Clean Itemsets')], #removal popup
-        [sg.Button('Show All Rules')],
+        [sg.Input(key='p2I3')],
+        [sg.Button('Generate Rules',key='p2B5')],
+        [sg.Button('Show Unnamed Discrete Value Table',key='p2B6')],
+        [sg.Button('Show Named Discrete Value Table',key='p2B7')],
+        [sg.Button('Show Identified Frequent Itemsets',key='p2B8')],
+        [sg.Button('Clean Itemsets',key='p2B9')], #removal popup
+        [sg.Button('Show All Rules',key='p2B10')],
         [sg.Text('Select Format')],
-        [sg.Radio('None',0)],
-        [sg.Radio('Format-1',0)],
-        [sg.Radio('Format-2',0)],
-        [sg.Button('Show Survived Rules')]#removal popup
+        [sg.Radio('None',0,key='p2R0')],
+        [sg.Radio('Format-1',0,key='p2R1')],
+        [sg.Radio('Format-2',0,key='p2R2')],
+        [sg.Button('Show Survived Rules',key='p2B11')]#removal popup
     ])],
 
-    [sg.Button('Generate Report')]
+    [sg.Button('Generate Report',key='p2B12')]
 ]
 #Part3
 """
@@ -79,17 +79,17 @@ create format 1 rules (show removal popup)
 p3_tab=[
     [sg.Frame('Settings',layout=[
         [sg.Text('Enter Dependent Variable')],
-        [sg.Input()]
+        [sg.Input(key='p3I0')]
     ])],
 
     [sg.Frame('Predictions', layout=[
-        [sg.Button('Finalize Format-1-Rules')], #rules popup
-        [sg.Button('Show Format-1-Rules')],
-        [sg.Button('Make Predictions')],
-        [sg.Button('Show Prediction Matrix')]
+        [sg.Button('Finalize Format-1-Rules',key='p3B0')], #rules popup
+        [sg.Button('Show Format-1-Rules',key='p3B1')],
+        [sg.Button('Make Predictions',key='p3B2')],
+        [sg.Button('Show Prediction Matrix',key='p3B3')]
     ])],
 
-    [sg.Button('Generate Report')]
+    [sg.Button('Generate Report',key='p3B4')]
 ]
 
 #The control panel (tab group)
@@ -106,7 +106,7 @@ show removed values (and itemsets, format 1 rules) + reason why removed
 reset
 """
 top=[
-    [sg.FileBrowse('Load'),sg.Button('Show All Removed Values'), sg.Button('Reset')]
+    [sg.FileBrowse('Load',key='tB0'),sg.Button('Show All Removed Values',key='tB1'), sg.Button('Reset',key='tB2')]
 ]
 
 #all tables
@@ -118,8 +118,8 @@ frequent itemsets + removal items, show rules in plain english , format 1 and fo
 prediction (format 1 rules, prediction matrix, correct prediction calculation)
 """
 right=[
-    [sg.Button('Original Data'), sg.Button('Discretized Data'),sg.Button('Training Set'),sg.Button('Testing Set'), sg.Button('Association Report'), sg.Button('Prediction Report')],
-    [sg.Canvas(size=(800,800))]
+    [sg.Button('Original Data',key='rB0'), sg.Button('Data w/o outliers',key='rB1'), sg.Button('Discretized Data',key='rB2'),sg.Button('Training Set',key='rB3'),sg.Button('Testing Set',key='rB4'), sg.Button('Association Report',key='rB5'), sg.Button('Prediction Report',key='rB6')],
+    [sg.Canvas(size=(800,800),key='rC0')]
 ]
 
 #window

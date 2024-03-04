@@ -16,5 +16,4 @@ def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight 
                 #add to outliers list
                 outliers.append([col,val])
     dataTable.outliers=outliers
-    #highlight outlighters on figure (hightlight outliers and their attributes)
     
