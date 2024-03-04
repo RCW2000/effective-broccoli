@@ -36,13 +36,13 @@ p2_tab=[
         [sg.Input()],
         [sg.Text('Enter Testing Set Filename')],
         [sg.Input()],
-        [sg.Button('Run Train/Test Split')]
+        [sg.Button('Run Train/Test Split')],
         [sg.Button('Download Data')]
     ])],
 
     [sg.Frame('Redundancies', layout=[
         [sg.Text()],#train set filename
-        [sg.Text('Enter Correlation Threshold')]
+        [sg.Text('Enter Correlation Threshold')],
         [sg.Input()],
         [sg.Button('Identify Redundancies')],
         [sg.Button('Show Correlation Matrix')],
@@ -50,7 +50,7 @@ p2_tab=[
     ])],
 
     [sg.Frame('Associations', layout=[
-        [sg.Text('Enter Confidence Treshold')]
+        [sg.Text('Enter Confidence Treshold')],
         [sg.Input()],
         [sg.Button('Generate Rules')],
         [sg.Button('Show Unnamed Discrete Value Table')],
@@ -79,11 +79,11 @@ p3_tab=[
     ])],
 
     [sg.Frame('Predictions', layout=[
-        [sg.Button('Finalize Format-1-Rules')] #rules popup
-        [sg.Button('Show Format-1-Rules')]
-        [sg.Button('Make Predictions')]
+        [sg.Button('Finalize Format-1-Rules')], #rules popup
+        [sg.Button('Show Format-1-Rules')],
+        [sg.Button('Make Predictions')],
         [sg.Button('Show Prediction Matrix')]
-    ])]
+    ])],
 
     [sg.Button('Generate Report')]
 ]
@@ -115,13 +115,13 @@ prediction (format 1 rules, prediction matrix, correct prediction calculation)
 """
 right=[
     [sg.Button('Original Data'), sg.Button('Training Set'),sg.Button('Testing Set'), sg.Button('Association Report'), sg.Button('Prediction Rebort')],
-    [sg.Canvas()]
+    [sg.Canvas(size=(800,800))]
 ]
 
 #window
 layout=[
     [top],
-    [sg.Column(left,justification='left'),right]
+    [sg.Column(left,justification='left'),sg.Column(right, justification='right')]
 ]
 window=sg.Window('Datamining Assignment', layout)
 
