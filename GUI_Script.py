@@ -113,4 +113,24 @@ Association Rules (show named and unnamed discrete value tables,
 frequent itemsets + removal items, show rules in plain english , format 1 and format 2 lists)
 prediction (format 1 rules, prediction matrix, correct prediction calculation)
 """
-right=[]
+right=[
+    [sg.Button('Original Data'), sg.Button('Training Set'),sg.Button('Testing Set'), sg.Button('Association Report'), sg.Button('Prediction Rebort')],
+    [sg.Canvas()]
+]
+
+#window
+layout=[
+    [top],
+    [sg.Column(left,justification='left'),right]
+]
+window=sg.Window('Datamining Assignment', layout)
+
+#logic
+while True:  # Event Loop
+
+    event, values = window.read()
+    #print(event, values)
+
+    if event == sg.WIN_CLOSED or event in ('Close', None):
+        break
+    window.close()
