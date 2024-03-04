@@ -10,12 +10,12 @@ Threshold Selector (median vs value)
 p1_tab=[
     [sg.Frame('Outliers', layout=[
         [sg.Button('Identify Outliers')],
-        [sg.Button('Remove Outliers')]
+        [sg.Button('Remove Outliers')] #removal popup
     ])],
 
     [sg.Frame('Discretization', layout=[
         [sg.Button('Calculate Median')],
-        [sg.Text()],
+        [sg.Text()],#median value
         [sg.Button('Run (Entropy-Based)')]
     ])]
 ]
@@ -32,43 +32,78 @@ format 1 and format 2 lists
 """
 p2_tab=[
     [sg.Frame('Data Split', layout=[
-        [sg.Input('Training Set Filename')],
-        [sg.Input('Training Set Filename')],
+        [sg.Text('Enter Training Set Filename')],
+        [sg.Input()],
+        [sg.Text('Enter Testing Set Filename')],
+        [sg.Input()],
         [sg.Button('Run Train/Test Split')]
         [sg.Button('Download Data')]
     ])],
 
     [sg.Frame('Redundancies', layout=[
-        [sg.Text()],
-        [sg.Input('Enter Correlation Threshold')],
+        [sg.Text()],#train set filename
+        [sg.Text('Enter Correlation Threshold')]
+        [sg.Input()],
         [sg.Button('Identify Redundancies')],
         [sg.Button('Show Correlation Matrix')],
-        [sg.Button('Remove Highly Correlated Attributes')]
+        [sg.Button('Remove Highly Correlated Attributes')]#removal value
     ])],
 
     [sg.Frame('Associations', layout=[
-        [sg.Button('Generate R')]
-    ])]
+        [sg.Text('Enter Confidence Treshold')]
+        [sg.Input()],
+        [sg.Button('Generate Rules')],
+        [sg.Button('Show Unnamed Discrete Value Table')],
+        [sg.Button('Show Named Discrete Value Table')],
+        [sg.Button('Show Identified Frequent Itemsets')],
+        [sg.Button('Clean Itemsets')], #removal popup
+        [sg.Button('Show All Rules')],
+        [sg.Text('Select Format')],
+        [sg.Radio('None',0)],
+        [sg.Radio('Format-1',0)],
+        [sg.Radio('Format-2',0)],
+        [sg.Button('Show Survived Rules')]#removal popup
+    ])],
+
+    [sg.Button('Generate Report')]
 ]
 #Part3
-
 """
 set dependent variable
 create format 1 rules (show removal popup)
 """
-p3_tab=[]
+p3_tab=[
+    [sg.Frame('Settings',layout=[
+        [sg.Text('Enter Dependent Variable')],
+        [sg.Input()]
+    ])],
+
+    [sg.Frame('Predictions', layout=[
+        [sg.Button('Finalize Format-1-Rules')] #rules popup
+        [sg.Button('Show Format-1-Rules')]
+        [sg.Button('Make Predictions')]
+        [sg.Button('Show Prediction Matrix')]
+    ])]
+
+    [sg.Button('Generate Report')]
+]
 
 #The control panel (tab group)
-left=[]
+left=[
+    [sg.TabGroup([
+        [sg.Tab('Part 1',p1_tab,background_color='BLUE'),sg.Tab('Part 2',p2_tab,background_color='RED'),sg.Tab('Part 3',p3_tab,background_color='YELLOW')]
+    ])]
+]
 #anything dealing with data loading, downloading
 
 """ 
 load csv
-down load csv
 show removed values (and itemsets, format 1 rules) + reason why removed
 reset
 """
-top=[]
+top=[
+    [sg.FileBrowse('Load'),sg.Button('Show All Removed Values'), sg.Button('Reset')]
+]
 
 #all tables
 """
