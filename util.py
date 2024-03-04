@@ -1,11 +1,14 @@
 import csv
 import matplotlib.pyplot as plt
+import math
 class DataTable:
     def __init__(self, originalData:list):
         self.columnHeaders=originalData[0]
         self.OriginalRecords=originalData[1]
         self.OriginalAttributeValues=originalData[2]
         self.OriginalFigure=originalData[3]
+        self.currentAttributeValues=self.OriginalAttributeValues
+        self.outliers=[]
 
 
 def Generate_Table_From_CSV(filepath):
@@ -24,4 +27,15 @@ def Generate_Table_From_CSV(filepath):
     originalData=[column_headers,records,attributeValues,figure]
     return originalData
 
-    
+def variance(data:list):
+    sum=0
+    sq_sum=0
+    for num in data:
+        sum=sum+num
+        sq_sum=sq_sum+(num*num)
+    avg=sum/(len(data))
+    sq_avg=sq_sum/(len(data))
+    return sq_avg-(avg*avg)
+
+def std_dev(data:list):
+    return math.sqrt(variance(data))
