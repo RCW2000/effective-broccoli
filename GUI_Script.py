@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
-
+import DM_Assignment_1 as dm
+import util
 sg.theme('BrightColors')
 #tab menues
 #Part1
@@ -106,7 +107,7 @@ show removed values (and itemsets, format 1 rules) + reason why removed
 reset
 """
 top=[
-    [sg.FileBrowse('Load',key='tB0'),sg.Button('Show All Removed Values',key='tB1'), sg.Button('Reset',key='tB2')]
+    [sg.Input(key='tI0', visible=False, enable_events=True),sg.FileBrowse('Load',key='tB0',target='tI0'),sg.Button('Show All Removed Values',key='tB1'), sg.Button('Reset',key='tB2')]
 ]
 
 #all tables
@@ -137,4 +138,11 @@ while True:  # Event Loop
 
     if event == sg.WIN_CLOSED or event in ('Close', None):
         break
-    window.close()
+    elif event=='tI0':
+        #create data object
+        print('hello')
+        originalData=util.Generate_Table_From_CSV(values['tB0'])
+        dataTable=util.DataTable(originalData)
+        print(dataTable)
+        #load figure into original data
+window.close()
