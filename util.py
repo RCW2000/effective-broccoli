@@ -22,7 +22,7 @@ def Generate_Table_From_CSV(filepath):
     for j in range(len(records[0])):
         helperArr=[]
         for i in range(len(records)):
-            helperArr.append(records[i][j])
+            helperArr.append(float(records[i][j]))
         attributeValues.append(helperArr)
     table=sg.Table(records,column_headers,expand_x=True,expand_y=True,justification='right',num_rows=35,key='OG_Table')
     originalData=[column_headers,records,attributeValues,table]
@@ -32,7 +32,6 @@ def variance(data:list):
     sum=0
     sq_sum=0
     for num in data:
-        num=float(num)
         sum=sum+num
         sq_sum=sq_sum+(num*num)
     avg=sum/(len(data))

@@ -9,10 +9,15 @@ def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight 
         std_dev=util.std_dev(attributeValues[col])
         std_devs.append(std_dev)
     outliers=[]
+    #print(std_devs)
     #determine outliers
-    for col in range(len(attributeValues)):
+    for col in range(1,len(attributeValues)):
+        #print(len(attributeValues))
         for val in range(len(attributeValues[col])):
-            if float(attributeValues[col][val]) > std_devs[col]*2 or float(attributeValues[col][val]) < -std_devs[col]*2:
+            #print(len(attributeValues[col]))
+            if attributeValues[col][val] > std_devs[col]*2 or attributeValues[col][val]< -std_devs[col]*2:
+                print(attributeValues[col][val])
+                print(std_devs[col]*2)
                 #add to outliers list
                 outliers.append([col,val])
     dataTable.outliers=outliers
