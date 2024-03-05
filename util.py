@@ -1,12 +1,13 @@
 import csv
 import matplotlib.pyplot as plt
 import math
+import PySimpleGUI as sg
 class DataTable:
     def __init__(self, originalData:list):
         self.columnHeaders=originalData[0]
         self.OriginalRecords=originalData[1]
         self.OriginalAttributeValues=originalData[2]
-        self.OriginalFigure=originalData[3]
+        self.OriginalTable=originalData[3]
         self.currentAttributeValues=self.OriginalAttributeValues
         self.outliers=[]
 
@@ -23,8 +24,8 @@ def Generate_Table_From_CSV(filepath):
         for i in range(len(records)):
             helperArr.append(records[i][j])
         attributeValues.append(helperArr)
-    figure=plt.table(records, colLabels=column_headers)
-    originalData=[column_headers,records,attributeValues,figure]
+    table=sg.Table(records,column_headers,expand_x=True,expand_y=True,justification='right',num_rows=35)
+    originalData=[column_headers,records,attributeValues,table]
     return originalData
 
 def variance(data:list):

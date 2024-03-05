@@ -1,7 +1,12 @@
 import PySimpleGUI as sg
 import DM_Assignment_1 as dm
 import util
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib
+
 sg.theme('BrightColors')
+matplotlib.use('TkAgg')
 #tab menues
 #Part1
 """
@@ -119,14 +124,22 @@ frequent itemsets + removal items, show rules in plain english , format 1 and fo
 prediction (format 1 rules, prediction matrix, correct prediction calculation)
 """
 right=[
-    [sg.Button('Original Data',key='rB0'), sg.Button('Data w/o outliers',key='rB1'), sg.Button('Discretized Data',key='rB2'),sg.Button('Training Set',key='rB3'),sg.Button('Testing Set',key='rB4'), sg.Button('Association Report',key='rB5'), sg.Button('Prediction Report',key='rB6')],
-    [sg.Canvas(size=(800,800),key='rC0')]
+   
+   
+    [sg.Col([[sg.Input(visible=False),sg.Input(visible=False)]], key='tds0')],
+    [sg.Frame('Reports',
+        [
+        [sg.Button('Original Data',key='rB0'), sg.Button('Data w/o outliers',key='rB1'), sg.Button('Discretized Data',key='rB2')],
+        [sg.Button('Training Set',key='rB3'),sg.Button('Testing Set',key='rB4')],
+        [sg.Button('Association Report',key='rB5'), sg.Button('Prediction Report',key='rB6')]
+        ],size=(375,120),element_justification='CENTER')
+    ]
 ]
 
 #window
 layout=[
     [top],
-    [sg.Column(left,justification='left'),sg.Column(right, justification='right')]
+    [sg.Column(left,justification='left'),sg.Column(right, element_justification='center',justification='right')]
 ]
 window=sg.Window('Datamining Assignment', layout)
 
@@ -140,9 +153,9 @@ while True:  # Event Loop
         break
     elif event=='tI0':
         #create data object
-        print('hello')
         originalData=util.Generate_Table_From_CSV(values['tB0'])
         dataTable=util.DataTable(originalData)
-        print(dataTable)
         #load figure into original data
+        window.extend_layout(window['tds0'],[[dataTable.OriginalTable]])
+
 window.close()
