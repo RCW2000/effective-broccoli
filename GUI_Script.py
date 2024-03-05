@@ -157,5 +157,21 @@ while True:  # Event Loop
         dataTable=util.DataTable(originalData)
         #load figure into original data
         window.extend_layout(window['tds0'],[[dataTable.OriginalTable]])
+    elif event=='p1B0':
+        #identify outliers
+        dm.identifyOutliers(dataTable)
+        #highlight outlier cells
+        out_records= dataTable.outliers
+        print(dataTable.outliers)
+        aff_rows=[]
+        for i in range(len(dataTable.outliers)):
+            aff_rows.append(dataTable.outliers[i][0])
+        aff_rows=list(set(aff_rows))
+        print(aff_rows)
+        rc=[]
+        for row in aff_rows:
+            rc.append((row,'Cyan'))
+        window['OG_Table'].update(row_colors=rc)
+
 
 window.close()

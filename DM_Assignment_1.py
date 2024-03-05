@@ -12,7 +12,7 @@ def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight 
     #determine outliers
     for col in range(len(attributeValues)):
         for val in range(len(attributeValues[col])):
-            if attributeValues[col][val] > std_devs[col]*2 or attributeValues[col][val] < -std_devs[col]*2:
+            if float(attributeValues[col][val]) > std_devs[col]*2 or float(attributeValues[col][val]) < -std_devs[col]*2:
                 #add to outliers list
                 outliers.append([col,val])
     dataTable.outliers=outliers
