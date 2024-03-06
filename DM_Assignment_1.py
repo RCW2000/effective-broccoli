@@ -2,6 +2,7 @@ import csv
 import util
 def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight rows to be romoved on figure
     attributeValues=dataTable.currentAttributeValues
+    print(attributeValues[3])
     std_devs=[]
     #for each attribute
     for col in range(len(attributeValues)):
@@ -9,16 +10,17 @@ def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight 
         std_dev=util.std_dev(attributeValues[col])
         std_devs.append(std_dev)
     outliers=[]
-    #print(std_devs)
+    print(std_devs[3])
     #determine outliers
-    for col in range(1,len(attributeValues)):
+    for i in range(1,len(attributeValues)):
         #print(len(attributeValues))
-        for val in range(len(attributeValues[col])):
+        for j in range(len(attributeValues[i])):
             #print(len(attributeValues[col]))
-            if attributeValues[col][val] > std_devs[col]*2 or attributeValues[col][val]< -std_devs[col]*2:
-                print(attributeValues[col][val])
-                print(std_devs[col]*2)
+            if attributeValues[i][j] > std_devs[i]*2 or attributeValues[i][j]< -std_devs[i]*2:
+                #print(attributeValues[i][j])
+                #print(std_devs[i]*2)
                 #add to outliers list
-                outliers.append([col,val])
+                outliers.append([i,j])
     dataTable.outliers=outliers
+    print(outliers)
     
