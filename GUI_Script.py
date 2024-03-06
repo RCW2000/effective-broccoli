@@ -1,12 +1,9 @@
 import PySimpleGUI as sg
 import DM_Assignment_1 as dm
 import util
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib
 
 sg.theme('BrightColors')
-matplotlib.use('TkAgg')
+
 #tab menues
 #Part1
 """
@@ -166,11 +163,21 @@ while True:  # Event Loop
         for i in range(len(dataTable.outliers)):
             aff_rows.append(dataTable.outliers[i][1])
         aff_rows=list(set(aff_rows))
-        print(aff_rows)
+        dataTable.outlierRecords=aff_rows
         rc=[]
         for row in aff_rows:
             rc.append((row,'Cyan'))
         window['OG_Table'].update(row_colors=rc)
-
-
+    elif event=='p1B1':
+        #remove outliers
+        dataTable.dataNoOutliers=[dataTable.OriginalRecords[i] for i in range(len(dataTable.OriginalRecords)) if i not in dataTable.outlierRecords ]
+        dataTable.currentAttributeValues=dataTable.dataNoOutliers
+        #create outlier table
+        dataTable.sansOutlierTable=sg.Table(dataTable.dataNoOutliers,dataTable.columnHeaders,expand_x=True,expand_y=True,justification='right',num_rows=35,key='SO_Table')
+        #switch scene to data w/o outlier table
+        window['OG_Table'].update(visible=False)
+        window.extend_layout(window['tds0'],[[dataTable.sansOutlierTable]])
+        #pop out outlier removal report
+        util.generate_Outlier_Report(dataTable)
+        sg.popup_scrolled(dataTable.outlierRemovalReport,title="Outlier Removal Report",size=(300,500))
 window.close()
