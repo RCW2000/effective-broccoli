@@ -173,11 +173,17 @@ while True:  # Event Loop
         dataTable.dataNoOutliers=[dataTable.OriginalRecords[i] for i in range(len(dataTable.OriginalRecords)) if i not in dataTable.outlierRecords ]
         dataTable.currentAttributeValues=dataTable.dataNoOutliers
         #create outlier table
-        dataTable.sansOutlierTable=sg.Table(dataTable.dataNoOutliers,dataTable.columnHeaders,expand_x=True,expand_y=True,justification='right',num_rows=35,key='SO_Table')
         #switch scene to data w/o outlier table
-        window['OG_Table'].update(visible=False)
-        window.extend_layout(window['tds0'],[[dataTable.sansOutlierTable]])
+        window['OG_Table'].update(values=dataTable.dataNoOutliers)
         #pop out outlier removal report
         util.generate_Outlier_Report(dataTable)
-        sg.popup_scrolled(dataTable.outlierRemovalReport,title="Outlier Removal Report",size=(300,500))
+        sg.popup_scrolled(dataTable.outlierRemovalReport,title="Outlier Removal Report",size=(100,125))
+    elif event=='p1B2':
+        #calculate Median
+        medians=[]
+        for col in dataTable.currentAttributeValues:
+            medians.append(util.median(col))
+        print(medians)
+        
+        window['p1T0'].update(values=(str(medians)))
 window.close()

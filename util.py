@@ -61,10 +61,10 @@ def generate_Outlier_Report(dataTable:DataTable):
         num=attributeValues[col][val]
         header=columnNames[col]
         OutlierText=OutlierText+"The Value: "+str(num)+" Located In: "+header+"\n"
-    OutlierText=OutlierText+"The Following Records Have Been Removed Due to Containing Outliers:\n"+str(header)+"\n"
+    OutlierText=OutlierText+"The Following Records Have Been Removed Due to Containing Outliers:\n"
     rmv_records=[dataTable.OriginalRecords[i] for i in range(len(dataTable.OriginalRecords)) if i in dataTable.outlierRecords ]
     for i in range(len(rmv_records)):
-        OutlierText=OutlierText+str(rmv_records)+"\n"
+        OutlierText=OutlierText+str(rmv_records[i])+"\n"
     dataTable.RMV_txt=dataTable.RMV_txt+OutlierText
     OutlierText=OutlierText+"Attributes Affected: "
     aff_cols=[]
@@ -72,6 +72,33 @@ def generate_Outlier_Report(dataTable:DataTable):
         aff_cols.append(dataTable.outliers[i][0])
     aff_cols=list(set(aff_cols))
     for i in range(len(aff_cols)):
-        OutlierText=OutlierText+header[aff_cols[i]]+" "
+        OutlierText=OutlierText+columnNames[aff_cols[i]]+" "
     OutlierText=OutlierText+"\nTotal Records Removed: "+str(len(rmv_records))+" Total Records Remaining: "+str(len(dataTable.OriginalRecords)-len(rmv_records))
     dataTable.outlierRemovalReport=OutlierText
+
+def tagSort(data:list):
+    tags=[i for i in range(len(data))]
+    for i in range(len(data)):
+        for j in range(i+1,len(data)):
+            if data[i] > data[j]:
+                tags[i], tags[j] = tags[j], tags[i]
+    return tags
+
+def ascData(data:list):
+    genTags=tagSort(data)
+    sorted_Data=[]
+    for tag in genTags:
+        sorted_Data.append(data[tag])
+    return sorted_Data
+
+def median(data:list):
+    #sort data
+    Ordered_Data=ascData(data)
+    #find median
+    if len(Ordered_Data)%2!=0:
+        medianInd=math.ceil(len(Ordered_Data)/2)
+        return float(Ordered_Data[medianInd])
+    else:
+        medianInd_1=math.floor(len(Ordered_Data)/2)
+        medianInd_2=math.ceil(len(Ordered_Data)/2)
+        return (float(Ordered_Data[medianInd_1])+float(Ordered_Data[medianInd_2]))/2

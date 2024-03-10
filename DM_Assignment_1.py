@@ -19,4 +19,6 @@ def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight 
                 #add to outliers list
                 outliers.append([i,j])
     dataTable.outliers=outliers
+
+def findMedians()
     
