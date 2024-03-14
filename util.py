@@ -22,14 +22,8 @@ def Generate_Table_From_CSV(filepath):
     table=[line for line in rawdata]
     column_headers=table[0]
     records=table[1:]
-    attributeValues=[]
-    for j in range(len(records[0])):
-        helperArr=[]
-        for i in range(len(records)):
-            helperArr.append(float(records[i][j]))
-        attributeValues.append(helperArr)
     table=sg.Table(records,column_headers,expand_x=True,expand_y=True,justification='right',num_rows=35,key='OG_Table')
-    originalData=[column_headers,records,attributeValues,table]
+    originalData=[column_headers,records,record_to_values(records),table]
     return originalData
 
 def mean(data:list):
@@ -102,3 +96,12 @@ def median(data:list):
         medianInd_1=math.floor(len(Ordered_Data)/2)
         medianInd_2=math.ceil(len(Ordered_Data)/2)
         return (float(Ordered_Data[medianInd_1])+float(Ordered_Data[medianInd_2]))/2
+    
+def record_to_values(record:list):
+    attributeValues=[]
+    for j in range(len( record[0])):
+        helperArr=[]
+        for i in range(len(record)):
+            helperArr.append(float(record[i][j]))
+        attributeValues.append(helperArr)
+    return attributeValues

@@ -20,5 +20,14 @@ def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight 
                 outliers.append([i,j])
     dataTable.outliers=outliers
 
-def findMedians()
+def findMedians(dataTable:util.DataTable):
+    attributeValues=dataTable.currentAttributeValues
+    medians=[]
+    for col in range(len(attributeValues)):
+        print(len(attributeValues[0]))
+        median=util.median(attributeValues[col])
+        medians.append(median)
+    return medians
+    
+def entropy_based_discretization(thresholdvalues:list):
     

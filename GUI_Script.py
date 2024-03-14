@@ -20,7 +20,7 @@ p1_tab=[
 
     [sg.Frame('Discretization', layout=[
         [sg.Button('Calculate Median',key='p1B2'),sg.Text(key='p1T0')],#median value
-        [sg.Text('Enter Threshold Value')],
+        [sg.Text('Enter Threshold Values (Separate by Commas)')],
         [sg.Input(key='p1I0')],
         [sg.Button('Run (Entropy-Based)',key='p1B3')],
         [sg.Button('Show Discretized Data',key='p1B4')]#popup
@@ -171,7 +171,7 @@ while True:  # Event Loop
     elif event=='p1B1':
         #remove outliers
         dataTable.dataNoOutliers=[dataTable.OriginalRecords[i] for i in range(len(dataTable.OriginalRecords)) if i not in dataTable.outlierRecords ]
-        dataTable.currentAttributeValues=dataTable.dataNoOutliers
+        dataTable.currentAttributeValues=util.record_to_values(dataTable.dataNoOutliers)
         #create outlier table
         #switch scene to data w/o outlier table
         window['OG_Table'].update(values=dataTable.dataNoOutliers)
@@ -180,10 +180,9 @@ while True:  # Event Loop
         sg.popup_scrolled(dataTable.outlierRemovalReport,title="Outlier Removal Report",size=(100,125))
     elif event=='p1B2':
         #calculate Median
-        medians=[]
-        for col in dataTable.currentAttributeValues:
-            medians.append(util.median(col))
+        medians=dm.findMedians(dataTable)
         print(medians)
-        
-        window['p1T0'].update(values=(str(medians)))
+        window['p1T0'].update(medians[1:])
+    elif event=='p1B3':
+    
 window.close()
