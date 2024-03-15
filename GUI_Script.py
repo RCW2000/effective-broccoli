@@ -184,5 +184,9 @@ while True:  # Event Loop
         print(medians)
         window['p1T0'].update(medians[1:])
     elif event=='p1B3':
-    
+        #discretized values
+        dataTable.currentAttributeValues,dataTable.discretizedRecords=dm.entropy_discretization(dataTable.currentAttributeValues)
+        #update table
+        window['OG_Table'].update(values=dataTable.discretizedRecords)
+
 window.close()

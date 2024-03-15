@@ -14,6 +14,7 @@ class DataTable:
         self.sansOutlierTable=None
         self.outlierRemovalReport=None
         self.RMV_txt=""
+        self.discretizedRecords=[]
 
 
 def Generate_Table_From_CSV(filepath):
@@ -105,3 +106,23 @@ def record_to_values(record:list):
             helperArr.append(float(record[i][j]))
         attributeValues.append(helperArr)
     return attributeValues
+
+def values_to_records(values:list):
+    records=[]
+    inc=0
+    helperArr=[]
+    while inc < len(values[0]):
+        for col in range(len(values)):
+            helperArr.append(values[col][inc])
+        records.append(helperArr)
+        helperArr=[]
+        inc=inc+1
+    return records
+
+def partitionMed(partitionCol:list):
+    av=[partitionCol[i][1] for i in range(len(partitionCol))]
+    return median(av)
+
+def partitionMean(partitionCol:list):
+    av=[partitionCol[i][1] for i in range(len(partitionCol))]
+    return mean(av)
