@@ -66,7 +66,7 @@ def createPartionColumn(attributeCol:list,classValues:list):
         PartitionColumn.append([val_ind,attributeCol[val_ind],classValues[val_ind]])
     return PartitionColumn
 
-def isStopCondition(partitionCol:list,all_classValues):
+def isStopCondition(partitionCol:list,OriginalValues):
     av=[partitionCol[i][1] for i in range(len(partitionCol))]
     classes=[partitionCol[i][2] for i in range(len(partitionCol))]
     m,pi,_=set_class_info(av,classes)
@@ -74,11 +74,11 @@ def isStopCondition(partitionCol:list,all_classValues):
     if m<2:
         return True
     if min(pi)/max(pi) <0.5:
-        if m < math.floor(len(list(set(all_classValues)))/2) or m==math.floor(len(list(set(all_classValues)))/2):
+        if m < math.floor(len(list(set(OriginalValues)))/2) or m==math.floor(len(list(set(OriginalValues)))/2):
             return True
     return False
 
-def medianPartition(partitionCol:list,all_classValues):
+def Partition(partitionCol:list,OriginalValues,function):
     #create table to hold partioned sets where each r/c = A11A21 etc
     partition_table=[[0 for i in range(2)] for i in range(len(partitionCol))]
     print('created table: '+str(len(partition_table)))
@@ -90,9 +90,9 @@ def medianPartition(partitionCol:list,all_classValues):
         while j <2:
             if i ==0:
                 k=1
-                partition_table[i][0]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]<util.partitionMed(partitionCol)]#A1
-                partition_table[i][1]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]>util.partitionMed(partitionCol) or partitionCol[i][1]==util.partitionMed(partitionCol)]#A2
-                print(partition_table[i][1][0][1])
+                partition_table[i][0]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]<function(partitionCol)]#A1
+                partition_table[i][1]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]>function(partitionCol) or partitionCol[i][1]==util.partitionMed(partitionCol)]#A2
+                #print(partition_table[i][1][0][1])
                 #print('partition added')
                 if partition_table[i][0]==[]:
                     partition_table[i][0]='skip'
@@ -136,12 +136,12 @@ def medianPartition(partitionCol:list,all_classValues):
                     k=k*-1
                     j=j+1
             elif k<0:
-                if partition_table[i-4][j]!='skip' and len(partition_table[i-4][j])!=1:
-                    partition_table[i][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]<util.partitionMed(partition_table[i-4][j])]
+                if partition_table[i-3][j]!='skip' and len(partition_table[i-3][j])!=1:
+                    partition_table[i][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]<util.partitionMed(partition_table[i-3][j])]
                     if partition_table[i][j]==[]:
                         partition_table[i][j]='skip'
                     if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]>util.partitionMed(partition_table[i-4][j]) or partition_table[i-4][j][g][1]==util.partitionMed(partition_table[i-4][j])]
+                        partition_table[i+1][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]>util.partitionMed(partition_table[i-3][j]) or partition_table[i-3][j][g][1]==util.partitionMed(partition_table[i-3][j])]
                         if partition_table[i+1][j]==[]:
                             partition_table[i+1][j]='skip'
                     k=k*-1
@@ -171,14 +171,15 @@ def medianPartition(partitionCol:list,all_classValues):
         while j <2:
             if i+1<len(partition_table):
                 if i==0:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
+                    if partition_table[i][j]!='skip' and (isStopCondition(partition_table[i][j],OriginalValues))==True:
                         partition_table[i][j].append('stop')
-
+                    elif  partition_table[i][j]!='skip' and i+2<len(partition_table) and (partition_table[i+1][j]=='skip' or partition_table[i+2][j]=='skip'):
+                        partition_table[i][j].append('stop')
                     k=1
                     j=j+1
                     
                 elif i==1:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
+                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],OriginalValues)==True:
                         if partition_table[i-1][j][-1]=='stop':
                             partition_table[i][j].append('void')
                             
@@ -187,7 +188,25 @@ def medianPartition(partitionCol:list,all_classValues):
                             
                         else:
                             partition_table[i][j].append('stop')
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
+                    elif partition_table[i][j]!='skip' and i+3<len(partition_table) and (partition_table[i+2][j]=='skip' or partition_table[i+3][j]=='skip'):
+                        if partition_table[i-1][j][-1]=='stop':
+                            partition_table[i][j].append('void')
+                            
+                        elif partition_table[i-1][j][-1]=='void':
+                            partition_table[i][j].append('void')
+                            
+                        else:
+                            partition_table[i][j].append('stop')
+                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        if partition_table[i-1][j][-1]=='stop':
+                            partition_table[i+1][j].append('void')
+                            
+                        elif partition_table[i-1][j][-1]=='void':
+                            partition_table[i+1][j].append('void')
+                            
+                        else:
+                            partition_table[i+1][j].append('stop')
+                    elif partition_table[i+1][j]!='skip' and i+5 <len(partition_table) and (partition_table[i+4][j]=='skip' or partition_table[i+5][j]=='skip'):
                         if partition_table[i-1][j][-1]=='stop':
                             partition_table[i+1][j].append('void')
                             
@@ -198,7 +217,7 @@ def medianPartition(partitionCol:list,all_classValues):
                             partition_table[i+1][j].append('stop')
                     j=j+1
                 elif k>0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
+                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],OriginalValues)==True:
                         if partition_table[i-2][j][-1]=='stop':
                             partition_table[i][j].append('void')
                             
@@ -207,8 +226,25 @@ def medianPartition(partitionCol:list,all_classValues):
                             
                         else:
                             partition_table[i][j].append('stop')
+                    elif partition_table[i][j]!='skip' and i+5 <len(partition_table) and  (partition_table[i+4][j]=='skip' or partition_table[i+5][j]=='skip'):
+                        if partition_table[i-2][j][-1]=='stop':
+                            partition_table[i][j].append('void')
                             
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
+                        elif partition_table[i-2][j][-1]=='void':
+                            partition_table[i][j].append('void')
+                            
+                        else:
+                            partition_table[i][j].append('stop')
+                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        if partition_table[i-2][j][-1]=='stop':
+                            partition_table[i+1][j].append('void')
+                            
+                        elif partition_table[i-2][j][-1]=='void':
+                            partition_table[i+1][j].append('void')
+                            
+                        else:
+                            partition_table[i+1][j].append('stop')
+                    elif partition_table[i+1][j]!='skip' and i+7<len(partition_table) and (partition_table[i+6][j]=='skip' or partition_table[i+7][j]=='skip'):
                         if partition_table[i-2][j][-1]=='stop':
                             partition_table[i+1][j].append('void')
                             
@@ -219,26 +255,42 @@ def medianPartition(partitionCol:list,all_classValues):
                             partition_table[i+1][j].append('stop')
                     j=j+1    
                 elif k<0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
+                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],OriginalValues)==True:
+                        if partition_table[i-3][j][-1]=='stop':
                             partition_table[i][j].append('void')
                             
-                        elif partition_table[i-4][j][-1]=='void':
+                        elif partition_table[i-3][j][-1]=='void':
                             partition_table[i][j].append('void')
                             
                         else:
                             partition_table[i][j].append('stop')
+                    elif partition_table[i][j]!='skip' and i+7<len(partition_table) and (partition_table[i+6][j]=='skip' or partition_table[i+7][j]=='skip'):
+                        if partition_table[i-3][j][-1]=='stop':
+                            partition_table[i][j].append('void')
                             
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
+                        elif partition_table[i-3][j][-1]=='void':
+                            partition_table[i][j].append('void')
+                            
+                        else:
+                            partition_table[i][j].append('stop')        
+                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        if partition_table[i-3][j][-1]=='stop':
                             partition_table[i+1][j].append('void')
                             
-                        elif partition_table[i-4][j][-1]=='void':
+                        elif partition_table[i-3][j][-1]=='void':
                             partition_table[i+1][j].append('void')
                             
                         else:
                             partition_table[i+1][j].append('stop')
-                    
+                    elif partition_table[i+1][j]!='skip' and i+9<len(partition_table) and (partition_table[i+8][j]=='skip' or partition_table[i+9][j]=='skip'):
+                        if partition_table[i-3][j][-1]=='stop':
+                            partition_table[i+1][j].append('void')
+                            
+                        elif partition_table[i-3][j][-1]=='void':
+                            partition_table[i+1][j].append('void')
+                            
+                        else:
+                            partition_table[i+1][j].append('stop')
                     j=j+1    
         if i==0:
             i=i+1
@@ -247,12 +299,12 @@ def medianPartition(partitionCol:list,all_classValues):
         else:
             k=k*-1
             i=i+2
-        print(str(i))
-        print(len(partition_table))
+        #print(str(i))
+        #print(partition_table)
     print('added flags to table')
     #calculate gain using tabular logic find parent and sibling for each stop
     #strip table
-    #print(partition_table)
+    print(partition_table)
     gains=[]
     partitions=[]
     i=0
@@ -334,20 +386,20 @@ def medianPartition(partitionCol:list,all_classValues):
                     if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
                         partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
                         partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
+                        ig=info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])
                         gains.append(ig)
                         gains.append('n/a')
                         j=j+1
                         print('found stops i=1')  
                     elif partition_table[i][j][-1]=='stop':
                         partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
+                        ig=info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])
                         gains.append(ig)
                         j=j+1
                         print('found stops i=1')
                     elif partition_table[i+1][j][-1]=='stop':
                         partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
+                        ig=info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])
                         gains.append(ig)
                         j=j+1
                         print('found stops i=1')
@@ -365,7 +417,7 @@ def medianPartition(partitionCol:list,all_classValues):
                   
     return partitions,gains
 
-def meanPartition(partitionCol:list,all_classValues):
+def meanPartition(partitionCol:list,OriginalValues):
     #create table to hold partioned sets where each r/c = A11A21 etc
     partition_table=[[0 for i in range(2)] for i in range(len(partitionCol))]
     print('created table: '+str(len(partition_table)))
@@ -379,7 +431,7 @@ def meanPartition(partitionCol:list,all_classValues):
                 k=1
                 partition_table[i][0]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]<util.partitionMean(partitionCol)]#A1
                 partition_table[i][1]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]>util.partitionMean(partitionCol) or partitionCol[i][1]==util.partitionMean(partitionCol)]#A2
-                print(partition_table[i][1][0][1])
+                #print(partition_table[i][1][0][1])
                 #print('partition added')
                 if partition_table[i][0]==[]:
                     partition_table[i][0]='skip'
@@ -423,12 +475,12 @@ def meanPartition(partitionCol:list,all_classValues):
                     k=k*-1
                     j=j+1
             elif k<0:
-                if partition_table[i-4][j]!='skip' and len(partition_table[i-4][j])!=1:
-                    partition_table[i][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]<util.partitionMean(partition_table[i-4][j])]
+                if partition_table[i-3][j]!='skip' and len(partition_table[i-3][j])!=1:
+                    partition_table[i][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]<util.partitionMean(partition_table[i-3][j])]
                     if partition_table[i][j]==[]:
                         partition_table[i][j]='skip'
                     if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]>util.partitionMean(partition_table[i-4][j]) or partition_table[i-4][j][g][1]==util.partitionMean(partition_table[i-4][j])]
+                        partition_table[i+1][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]>util.partitionMean(partition_table[i-3][j]) or partition_table[i-3][j][g][1]==util.partitionMean(partition_table[i-3][j])]
                         if partition_table[i+1][j]==[]:
                             partition_table[i+1][j]='skip'
                     k=k*-1
@@ -458,14 +510,15 @@ def meanPartition(partitionCol:list,all_classValues):
         while j <2:
             if i+1<len(partition_table):
                 if i==0:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
+                    if partition_table[i][j]!='skip' and (isStopCondition(partition_table[i][j],OriginalValues))==True:
                         partition_table[i][j].append('stop')
-
+                    elif  i+2<len(partition_table) and (partition_table[i+1][j]=='skip' or partition_table[i+2][j]=='skip'):
+                        partition_table[i][j].append('stop')
                     k=1
                     j=j+1
                     
                 elif i==1:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
+                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],OriginalValues)==True:
                         if partition_table[i-1][j][-1]=='stop':
                             partition_table[i][j].append('void')
                             
@@ -474,7 +527,25 @@ def meanPartition(partitionCol:list,all_classValues):
                             
                         else:
                             partition_table[i][j].append('stop')
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
+                    elif partition_table[i][j]!='skip' and i+3<len(partition_table) and (partition_table[i+2][j]=='skip' or partition_table[i+3][j]=='skip'):
+                        if partition_table[i-1][j][-1]=='stop':
+                            partition_table[i][j].append('void')
+                            
+                        elif partition_table[i-1][j][-1]=='void':
+                            partition_table[i][j].append('void')
+                            
+                        else:
+                            partition_table[i][j].append('stop')
+                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        if partition_table[i-1][j][-1]=='stop':
+                            partition_table[i+1][j].append('void')
+                            
+                        elif partition_table[i-1][j][-1]=='void':
+                            partition_table[i+1][j].append('void')
+                            
+                        else:
+                            partition_table[i+1][j].append('stop')
+                    elif partition_table[i+1][j]!='skip' and i+5 <len(partition_table) and  (partition_table[i+4][j]=='skip' or partition_table[i+5][j]=='skip'):
                         if partition_table[i-1][j][-1]=='stop':
                             partition_table[i+1][j].append('void')
                             
@@ -485,7 +556,7 @@ def meanPartition(partitionCol:list,all_classValues):
                             partition_table[i+1][j].append('stop')
                     j=j+1
                 elif k>0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
+                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],OriginalValues)==True:
                         if partition_table[i-2][j][-1]=='stop':
                             partition_table[i][j].append('void')
                             
@@ -494,8 +565,25 @@ def meanPartition(partitionCol:list,all_classValues):
                             
                         else:
                             partition_table[i][j].append('stop')
+                    elif partition_table[i][j]!='skip' and i+5 <len(partition_table) and  (partition_table[i+4][j]=='skip' or partition_table[i+5][j]=='skip'):
+                        if partition_table[i-2][j][-1]=='stop':
+                            partition_table[i][j].append('void')
                             
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
+                        elif partition_table[i-2][j][-1]=='void':
+                            partition_table[i][j].append('void')
+                            
+                        else:
+                            partition_table[i][j].append('stop')
+                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        if partition_table[i-2][j][-1]=='stop':
+                            partition_table[i+1][j].append('void')
+                            
+                        elif partition_table[i-2][j][-1]=='void':
+                            partition_table[i+1][j].append('void')
+                            
+                        else:
+                            partition_table[i+1][j].append('stop')
+                    elif partition_table[i+1][j]!='skip' and i+7<len(partition_table) and (partition_table[i+6][j]=='skip' or partition_table[i+7][j]=='skip'):
                         if partition_table[i-2][j][-1]=='stop':
                             partition_table[i+1][j].append('void')
                             
@@ -506,26 +594,42 @@ def meanPartition(partitionCol:list,all_classValues):
                             partition_table[i+1][j].append('stop')
                     j=j+1    
                 elif k<0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
+                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],OriginalValues)==True:
+                        if partition_table[i-3][j][-1]=='stop':
                             partition_table[i][j].append('void')
                             
-                        elif partition_table[i-4][j][-1]=='void':
+                        elif partition_table[i-3][j][-1]=='void':
                             partition_table[i][j].append('void')
                             
                         else:
                             partition_table[i][j].append('stop')
+                    elif partition_table[i][j]!='skip' and i+7<len(partition_table) and (partition_table[i+6][j]=='skip' or partition_table[i+7][j]=='skip'):
+                        if partition_table[i-3][j][-1]=='stop':
+                            partition_table[i][j].append('void')
                             
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
+                        elif partition_table[i-3][j][-1]=='void':
+                            partition_table[i][j].append('void')
+                            
+                        else:
+                            partition_table[i][j].append('stop')        
+                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        if partition_table[i-3][j][-1]=='stop':
                             partition_table[i+1][j].append('void')
                             
-                        elif partition_table[i-4][j][-1]=='void':
+                        elif partition_table[i-3][j][-1]=='void':
                             partition_table[i+1][j].append('void')
                             
                         else:
                             partition_table[i+1][j].append('stop')
-                    
+                    elif partition_table[i+1][j]!='skip' and i+9<len(partition_table) and (partition_table[i+8][j]=='skip' or partition_table[i+9][j]=='skip'):
+                        if partition_table[i-3][j][-1]=='stop':
+                            partition_table[i+1][j].append('void')
+                            
+                        elif partition_table[i-3][j][-1]=='void':
+                            partition_table[i+1][j].append('void')
+                            
+                        else:
+                            partition_table[i+1][j].append('stop')
                     j=j+1    
         if i==0:
             i=i+1
@@ -534,8 +638,8 @@ def meanPartition(partitionCol:list,all_classValues):
         else:
             k=k*-1
             i=i+2
-        print(str(i))
-        print(len(partition_table))
+        #print(str(i))
+        #print(partition_table)
     print('added flags to table')
     #calculate gain using tabular logic find parent and sibling for each stop
     #strip table
@@ -621,20 +725,20 @@ def meanPartition(partitionCol:list,all_classValues):
                     if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
                         partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
                         partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
+                        ig=info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])
                         gains.append(ig)
                         gains.append('n/a')
                         j=j+1
                         print('found stops i=1')  
                     elif partition_table[i][j][-1]=='stop':
                         partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
+                        ig=info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])
                         gains.append(ig)
                         j=j+1
                         print('found stops i=1')
                     elif partition_table[i+1][j][-1]=='stop':
                         partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
+                        ig=info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])
                         gains.append(ig)
                         j=j+1
                         print('found stops i=1')
@@ -651,18 +755,19 @@ def meanPartition(partitionCol:list,all_classValues):
         
                   
     return partitions,gains
-
 def entropy_discretization(attributeValues:list):
     partitionCols=[]
     partitions=[]
     classValues=attributeValues[0]
+    
     for col in range(1,len(attributeValues)):
         partitionCols.append(createPartionColumn(attributeValues[col],classValues))
     print('partion columns created')
     for i in range(len(partitionCols)):
         #do med
-        med_parts,med_gains=medianPartition(partitionCols[i],classValues)
-        print(len(med_parts))
+        med_parts,med_gains=medianPartition(partitionCols[i],attributeValues[i+1])
+        #print(len(med_parts))
+        #print(med_parts)
         print('med '+str(i)+' run done')
         #cal total med gain
         t_med_gain=0
@@ -670,8 +775,8 @@ def entropy_discretization(attributeValues:list):
             if gain!='n/a':
                 t_med_gain=t_med_gain+gain
         #do mean
-        mean_parts,mean_gains=meanPartition(partitionCols[i],classValues)
-        print(len(mean_parts))
+        mean_parts,mean_gains=meanPartition(partitionCols[i],attributeValues[i+1])
+        #print(len(mean_parts))
         print('mean '+str(i)+' run done')
         #calc total mean gain
         t_mean_gain=0
