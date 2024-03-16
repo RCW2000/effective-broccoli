@@ -92,11 +92,11 @@ def median(data:list):
     #find median
     if len(Ordered_Data)%2!=0:
         medianInd=math.ceil(len(Ordered_Data)/2)
-        return float(Ordered_Data[medianInd])
+        return float(Ordered_Data[medianInd-1])
     else:
         medianInd_1=math.floor(len(Ordered_Data)/2)
         medianInd_2=math.ceil(len(Ordered_Data)/2)
-        return (float(Ordered_Data[medianInd_1])+float(Ordered_Data[medianInd_2]))/2
+        return (float(Ordered_Data[medianInd_1-1])+float(Ordered_Data[medianInd_2-1]))/2
     
 def record_to_values(record:list):
     attributeValues=[]
