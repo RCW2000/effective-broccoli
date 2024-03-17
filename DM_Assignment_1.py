@@ -31,6 +31,7 @@ def findMedians(dataTable:util.DataTable):
     return medians
 
 def entropy(s:list):
+    #print(s)
     s_av=[s[i][1] for i in range(len(s))]
     s_classes=[s[i][2] for i in range(len(s))]
     m,pi,_=set_class_info(s_av,s_classes)
@@ -66,7 +67,7 @@ def createPartionColumn(attributeCol:list,classValues:list):
         PartitionColumn.append([val_ind,attributeCol[val_ind],classValues[val_ind]])
     return PartitionColumn
 
-def isStopCondition(partitionCol:list,all_classValues):
+def isStopCondition(partitionCol:list,OriginalValues):
     av=[partitionCol[i][1] for i in range(len(partitionCol))]
     classes=[partitionCol[i][2] for i in range(len(partitionCol))]
     m,pi,_=set_class_info(av,classes)
@@ -74,86 +75,171 @@ def isStopCondition(partitionCol:list,all_classValues):
     if m<2:
         return True
     if min(pi)/max(pi) <0.5:
-        if m < math.floor(len(list(set(all_classValues)))/2) or m==math.floor(len(list(set(all_classValues)))/2):
+        if m < math.floor(len(list(set(OriginalValues)))/2) or m==math.floor(len(list(set(OriginalValues)))/2):
             return True
     return False
 
-def medianPartition(partitionCol:list,all_classValues):
+def Partition(partitionCol:list,OriginalValues,Partfunction):
     #create table to hold partioned sets where each r/c = A11A21 etc
     partition_table=[[0 for i in range(2)] for i in range(len(partitionCol))]
     print('created table: '+str(len(partition_table)))
     #patrition set until stop adding each to table
     i=0
     j=0
+    finPartitions=[]
     while i < len(partition_table):
         j=0
         while j <2:
-            if i ==0:
+            if i==0:
                 k=1
-                partition_table[i][0]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]<util.partitionMed(partitionCol)]#A1
-                partition_table[i][1]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]>util.partitionMed(partitionCol) or partitionCol[i][1]==util.partitionMed(partitionCol)]#A2
-                print(partition_table[i][1][0][1])
+                partition_table[i][0]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]<Partfunction(partitionCol)]#A1
+                partition_table[i][1]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]>Partfunction(partitionCol) or partitionCol[i][1]==Partfunction(partitionCol)]#A2
+                #print(partition_table[i][1][0][1])
                 #print('partition added')
                 if partition_table[i][0]==[]:
-                    partition_table[i][0]='skip'
-                elif partition_table[i][1]==[]:
-                    partition_table[i][1]='skip'
+                    partition_table[i][0]=False
+                if partition_table[i][1]==[]:
+                    partition_table[i][1]=False
+                #add to fin part
+                if partition_table[i][0]==[] or partition_table[i][1]==[]:
+                    finPartitions.append([partitionCol,'No Split'])
+                    partition_table[i][0]=False
+                    partition_table[i][1]=False
+                elif (partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True) and (partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True):
+                    finPartitions.append([partition_table[i][0],info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])])
+                    finPartitions.append([partition_table[i][1],'Duplicate'])
+                    partition_table[i][0]=False
+                    partition_table[i][1]=False
+                elif partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True:
+                    finPartitions.append([partition_table[i][0],info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])])
+                    partition_table[i][0]=False
+                elif partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True:
+                    finPartitions.append([partition_table[i][1],info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])])
+                    partition_table[i][1]=False
                 j=j+2 
             elif i==1:
-                if len(partition_table[i-1][0])!=1:
-                    partition_table[i][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]<util.partitionMed(partition_table[i-1][0])]
+                if  partition_table[i-1][0]!=False:
+                    partition_table[i][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]<Partfunction(partition_table[i-1][0])]
                     if partition_table[i][0]==[]:
-                        partition_table[i][0]='skip'
+                        partition_table[i][0]=False
                     if i+1 <len(partition_table):
-                        partition_table[i+1][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]>util.partitionMed(partition_table[i-1][0]) or partition_table[i-1][0][g][1]==util.partitionMed(partition_table[i-1][0])]
+                        partition_table[i+1][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]>Partfunction(partition_table[i-1][0]) or partition_table[i-1][0][g][1]==Partfunction(partition_table[i-1][0])]
                         if partition_table[i+1][0]==[]:
-                            partition_table[i+1][0]=='skip'
-                if len(partition_table[i-1][1])!=1:
-                    partition_table[i][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]<util.partitionMed(partition_table[i-1][1])]
-                    if partition_table[i][1]==[]:
-                        partition_table[i][1]='skip'
+                            partition_table[i+1][0]=False
+                    if partition_table[i][0]==[] or partition_table[i+1][0]==[]:
+                        finPartitions.append([partition_table[i-1][0],info_gain(len(partitionCol),partition_table[i-1][0],partition_table[i-1][1])])
+                        partition_table[i-1][0]=False
+                        partition_table[i][0]=False
+                        partition_table[i+1][0]=False
+                    elif (partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True) and (partition_table[i+1][0]!=False and isStopCondition(partition_table[i+1][0],OriginalValues)==True):
+                        finPartitions.append([partition_table[i][0],info_gain(len(partition_table[i-1][0]),partition_table[i][0],partition_table[i+1][0])])
+                        finPartitions.append([partition_table[i+1][0],'Duplicate'])
+                        partition_table[i][0]=False
+                        partition_table[i+1][0]=False
+                    elif partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True:
+                        finPartitions.append([partition_table[i][0],info_gain(len(partition_table[i-1][0]),partition_table[i][0],partition_table[i+1][0])])
+                        partition_table[i][0]=False
+                    elif partition_table[i+1][0]!=False and isStopCondition(partition_table[i+1][0],OriginalValues)==True:
+                        finPartitions.append([partition_table[i+1][0],info_gain(len(partition_table[i-1][0]),partition_table[i][0],partition_table[i+1][0])])
+                        partition_table[i+1][0]=False
+                else:
+                    partition_table[i][0]=False
                     if i+1 <len(partition_table):
-                        partition_table[i+1][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]>util.partitionMed(partition_table[i-1][1]) or partition_table[i-1][1][g][1]==util.partitionMed(partition_table[i-1][1])]    
+                        partition_table[i+1][0]=False
+                if partition_table[i-1][1]!=False:
+                    partition_table[i][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]<Partfunction(partition_table[i-1][1])]
+                    if partition_table[i][1]==[]:
+                        partition_table[i][1]=False
+                    if i+1 <len(partition_table):
+                        partition_table[i+1][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]>Partfunction(partition_table[i-1][1]) or partition_table[i-1][1][g][1]==Partfunction(partition_table[i-1][1])]    
                         if partition_table[i+1][1]==[]:
-                            partition_table[i+1][1]=='skip'
+                            partition_table[i+1][1]=False
+                    if partition_table[i][1]==[] or partition_table[i+1][1]==[]:
+                        finPartitions.append([partition_table[i-1][1],info_gain(len(partitionCol),partition_table[i-1][0],partition_table[i-1][1])])
+                        partition_table[i-1][1]=False
+                        partition_table[i][1]=False
+                        partition_table[i+1][1]=False
+                    elif (partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True) and (partition_table[i+1][1]!=False and isStopCondition(partition_table[i+1][1],OriginalValues)==True):
+                        finPartitions.append([partition_table[i][1],info_gain(len(partition_table[i-1][1]),partition_table[i][1],partition_table[i+1][1])])
+                        finPartitions.append([partition_table[i+1][1],'Duplicate'])
+                        partition_table[i][1]=False
+                        partition_table[i+1][1]=False
+                    elif partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True:
+                        finPartitions.append([partition_table[i][1],info_gain(len(partition_table[i-1][1]),partition_table[i][1],partition_table[i+1][1])])
+                        partition_table[i][1]=False
+                    elif partition_table[i+1][1]!=False and isStopCondition(partition_table[i+1][1],OriginalValues)==True:
+                        finPartitions.append([partition_table[i+1][1],info_gain(len(partition_table[i-1][1]),partition_table[i][1],partition_table[i+1][1])])
+                        partition_table[i+1][1]=False
+                else:
+                    partition_table[i][1]=False
+                    if i+1 <len(partition_table):
+                        partition_table[i+1][1]=False
                 j=j+2
                 #print('partition added')
             elif k>0:
-                if  partition_table[i-2][j]!='skip' and len(partition_table[i-2][j])!=1:
-                    partition_table[i][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]<util.partitionMed(partition_table[i-2][j])]
+                if  partition_table[i-2][j]!=False:
+                    partition_table[i][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]<Partfunction(partition_table[i-2][j])]
                     if partition_table[i][j]==[]:
-                        partition_table[i][j]='skip'
+                        partition_table[i][j]=False
                     if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]>util.partitionMed(partition_table[i-2][j]) or partition_table[i-2][j][g][1]==util.partitionMed(partition_table[i-2][j])]
+                        partition_table[i+1][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]>Partfunction(partition_table[i-2][j]) or partition_table[i-2][j][g][1]==Partfunction(partition_table[i-2][j])]
                         if partition_table[i+1][j]==[]:
-                            partition_table[i+1][j]='skip'
-                    j=j+1
+                            partition_table[i+1][j]=False
+                    if partition_table[i][j]==[] or partition_table[i+1][j]==[]:
+                        finPartitions.append([partition_table[i-2][j],info_gain(len(partition_table[i-3][j]),partition_table[i-2][j],partition_table[i-1][j])])
+                        partition_table[i-2][j]=False
+                        partition_table[i][j]=False
+                        partition_table[i+1][j]=False
+                    elif (partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True) and (partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True):
+                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])])
+                        finPartitions.append([partition_table[i+1][j],'Duplicate'])
+                        partition_table[i][j]=False
+                        partition_table[i+1][j]=False
+                    elif partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True:
+                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])])
+                        partition_table[i][j]=False
+                    elif partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        finPartitions.append([partition_table[i+1][j],info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])])
+                        partition_table[i+1][j]=False    
                     #print('partition added')
                 else:
-                    partition_table[i][j]='skip'
+                    partition_table[i][j]=False
                     if i+1 <len(partition_table):
-                        partition_table[i+1][j]='skip'
+                        partition_table[i+1][j]=False
                     k=k*-1
-                    j=j+1
+                j=j+1
             elif k<0:
-                if partition_table[i-4][j]!='skip' and len(partition_table[i-4][j])!=1:
-                    partition_table[i][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]<util.partitionMed(partition_table[i-4][j])]
+                if partition_table[i-3][j]!=False:
+                    partition_table[i][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]<Partfunction(partition_table[i-3][j])]
                     if partition_table[i][j]==[]:
-                        partition_table[i][j]='skip'
+                        partition_table[i][j]=False
                     if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]>util.partitionMed(partition_table[i-4][j]) or partition_table[i-4][j][g][1]==util.partitionMed(partition_table[i-4][j])]
+                        partition_table[i+1][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]>Partfunction(partition_table[i-3][j]) or partition_table[i-3][j][g][1]==Partfunction(partition_table[i-3][j])]
                         if partition_table[i+1][j]==[]:
-                            partition_table[i+1][j]='skip'
-                    k=k*-1
-                    j=j+1
+                            partition_table[i+1][j]=False
+                    if partition_table[i][j]==[] or partition_table[i+1][j]==[]:
+                        finPartitions.append([partition_table[i-3][j],info_gain(len(partition_table[i-5][j]),partition_table[i-3][j],partition_table[i-4][j])])
+                        partition_table[i-3][j]=False
+                        partition_table[i][j]=False
+                        partition_table[i+1][j]=False
+                    elif (partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True) and (partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True):
+                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])])
+                        finPartitions.append([partition_table[i+1][j],'Duplicate'])
+                        partition_table[i][j]=False
+                        partition_table[i+1][j]=False
+                    elif partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True:
+                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])])
+                        partition_table[i][j]=False
+                    elif partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
+                        finPartitions.append([partition_table[i+1][j],info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])])
+                        partition_table[i+1][j]=False
                     #print('partition added')
                 else:
-                    partition_table[i][j]='skip'
+                    partition_table[i][j]=False
                     if i+1 <len(partition_table):
-                        partition_table[i+1][j]='skip'
+                        partition_table[i+1][j]=False
                     k=k*-1
-                    j=j+1
-                    
+                j=j+1             
         if i==0:
             i=i+1
         elif i==1:
@@ -163,529 +249,43 @@ def medianPartition(partitionCol:list,all_classValues):
             i=i+2
     #print(partition_table)
     print('added partitions to table')
-    #add stop flag to actual cell
-    i=0
-    j=0
-    while i <len(partition_table):
-        j=0
-        while j <2:
-            if i+1<len(partition_table):
-                if i==0:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        partition_table[i][j].append('stop')
-
-                    k=1
-                    j=j+1
-                    
-                elif i==1:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-1][j][-1]=='stop':
-                            partition_table[i][j].append('void')
-                            
-                        elif partition_table[i-1][j][-1]=='void':
-                            partition_table[i][j].append('void')
-                            
-                        else:
-                            partition_table[i][j].append('stop')
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-1][j][-1]=='stop':
-                            partition_table[i+1][j].append('void')
-                            
-                        elif partition_table[i-1][j][-1]=='void':
-                            partition_table[i+1][j].append('void')
-                            
-                        else:
-                            partition_table[i+1][j].append('stop')
-                    j=j+1
-                elif k>0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-2][j][-1]=='stop':
-                            partition_table[i][j].append('void')
-                            
-                        elif partition_table[i-2][j][-1]=='void':
-                            partition_table[i][j].append('void')
-                            
-                        else:
-                            partition_table[i][j].append('stop')
-                            
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-2][j][-1]=='stop':
-                            partition_table[i+1][j].append('void')
-                            
-                        elif partition_table[i-2][j][-1]=='void':
-                            partition_table[i+1][j].append('void')
-                            
-                        else:
-                            partition_table[i+1][j].append('stop')
-                    j=j+1    
-                elif k<0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
-                            partition_table[i][j].append('void')
-                            
-                        elif partition_table[i-4][j][-1]=='void':
-                            partition_table[i][j].append('void')
-                            
-                        else:
-                            partition_table[i][j].append('stop')
-                            
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
-                            partition_table[i+1][j].append('void')
-                            
-                        elif partition_table[i-4][j][-1]=='void':
-                            partition_table[i+1][j].append('void')
-                            
-                        else:
-                            partition_table[i+1][j].append('stop')
-                    
-                    j=j+1    
-        if i==0:
-            i=i+1
-        elif i==1:
-            i=i+2
-        else:
-            k=k*-1
-            i=i+2
-        print(str(i))
-        print(len(partition_table))
-    print('added flags to table')
-    #calculate gain using tabular logic find parent and sibling for each stop
-    #strip table
-    #print(partition_table)
-    gains=[]
+    tot_gains=0
+    for i in range(len(finPartitions)):
+        if finPartitions[i][1]!='No Skip' and finPartitions[i][1]!='Duplicate' and finPartitions[i][1]!=False:
+            tot_gains=tot_gains+finPartitions[i][1]
     partitions=[]
-    i=0
-    j=0
-    while i < len(partition_table):
-        j=0
-        while j < 2 :
-            if i==0:
-                if  partition_table[i][0][-1]=='stop' and partition_table[i][1][-1]=='stop':
-                        partitions.append(partition_table[i][0][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i][1][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+2
-                        k=1
-                        print('found stops i=0')
-                elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])
-                        gains.append(ig)
-                        k=1
-                        j=j+1
-                        print('found stops i=0')
-                else:
-                    j=j+1
-            elif i==1:
-                if i+1<len(partition_table):
-                    if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-1][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+1
-                        print('found stops i=1')  
-                    elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-1][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    elif partition_table[i+1][j][-1]=='stop':
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-1][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    else:j=j+1
-                else:
-                    break
-            elif k>0 :
-                if i+1<len(partition_table):
-                    if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+1
-                        print('found stops i=1')  
-                    elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    elif partition_table[i+1][j][-1]=='stop':
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    else:j=j+1
-                else:
-                    break     
-            elif k<0 :
-                if i+1<len(partition_table):
-                    if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+1
-                        print('found stops i=1')  
-                    elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    elif partition_table[i+1][j][-1]=='stop':
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    else:j=j+1
-                else:
-                    break     
-        if i==0:
-            i=i+1
-        elif i==1:
-            i=i+2
-        else:
-            k=k*-1
-            i=i+2
-        
-                  
-    return partitions,gains
+    for i in range(len(finPartitions)):
+        for j in range(len(finPartitions[i][0])):
+            partitions.append(finPartitions[i][0][j][:-1])
+    return partitions,tot_gains
 
-def meanPartition(partitionCol:list,all_classValues):
-    #create table to hold partioned sets where each r/c = A11A21 etc
-    partition_table=[[0 for i in range(2)] for i in range(len(partitionCol))]
-    print('created table: '+str(len(partition_table)))
-    #patrition set until stop adding each to table
-    i=0
-    j=0
-    while i < len(partition_table):
-        j=0
-        while j <2:
-            if i ==0:
-                k=1
-                partition_table[i][0]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]<util.partitionMean(partitionCol)]#A1
-                partition_table[i][1]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]>util.partitionMean(partitionCol) or partitionCol[i][1]==util.partitionMean(partitionCol)]#A2
-                print(partition_table[i][1][0][1])
-                #print('partition added')
-                if partition_table[i][0]==[]:
-                    partition_table[i][0]='skip'
-                elif partition_table[i][1]==[]:
-                    partition_table[i][1]='skip'
-                j=j+2 
-            elif i==1:
-                if len(partition_table[i-1][0])!=1:
-                    partition_table[i][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]<util.partitionMean(partition_table[i-1][0])]
-                    if partition_table[i][0]==[]:
-                        partition_table[i][0]='skip'
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]>util.partitionMean(partition_table[i-1][0]) or partition_table[i-1][0][g][1]==util.partitionMean(partition_table[i-1][0])]
-                        if partition_table[i+1][0]==[]:
-                            partition_table[i+1][0]=='skip'
-                if len(partition_table[i-1][1])!=1:
-                    partition_table[i][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]<util.partitionMean(partition_table[i-1][1])]
-                    if partition_table[i][1]==[]:
-                        partition_table[i][1]='skip'
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]>util.partitionMean(partition_table[i-1][1]) or partition_table[i-1][1][g][1]==util.partitionMean(partition_table[i-1][1])]    
-                        if partition_table[i+1][1]==[]:
-                            partition_table[i+1][1]=='skip'
-                j=j+2
-                #print('partition added')
-            elif k>0:
-                if  partition_table[i-2][j]!='skip' and len(partition_table[i-2][j])!=1:
-                    partition_table[i][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]<util.partitionMean(partition_table[i-2][j])]
-                    if partition_table[i][j]==[]:
-                        partition_table[i][j]='skip'
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]>util.partitionMean(partition_table[i-2][j]) or partition_table[i-2][j][g][1]==util.partitionMean(partition_table[i-2][j])]
-                        if partition_table[i+1][j]==[]:
-                            partition_table[i+1][j]='skip'
-                    j=j+1
-                    #print('partition added')
-                else:
-                    partition_table[i][j]='skip'
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]='skip'
-                    k=k*-1
-                    j=j+1
-            elif k<0:
-                if partition_table[i-4][j]!='skip' and len(partition_table[i-4][j])!=1:
-                    partition_table[i][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]<util.partitionMean(partition_table[i-4][j])]
-                    if partition_table[i][j]==[]:
-                        partition_table[i][j]='skip'
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-4][j][g] for g in range(len(partition_table[i-4][j])) if partition_table[i-4][j][g][1]>util.partitionMean(partition_table[i-4][j]) or partition_table[i-4][j][g][1]==util.partitionMean(partition_table[i-4][j])]
-                        if partition_table[i+1][j]==[]:
-                            partition_table[i+1][j]='skip'
-                    k=k*-1
-                    j=j+1
-                    #print('partition added')
-                else:
-                    partition_table[i][j]='skip'
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]='skip'
-                    k=k*-1
-                    j=j+1
-                    
-        if i==0:
-            i=i+1
-        elif i==1:
-            i=i+2
-        else:
-            k=k*-1
-            i=i+2
-    #print(partition_table)
-    print('added partitions to table')
-    #add stop flag to actual cell
-    i=0
-    j=0
-    while i <len(partition_table):
-        j=0
-        while j <2:
-            if i+1<len(partition_table):
-                if i==0:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        partition_table[i][j].append('stop')
-
-                    k=1
-                    j=j+1
-                    
-                elif i==1:
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-1][j][-1]=='stop':
-                            partition_table[i][j].append('void')
-                            
-                        elif partition_table[i-1][j][-1]=='void':
-                            partition_table[i][j].append('void')
-                            
-                        else:
-                            partition_table[i][j].append('stop')
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-1][j][-1]=='stop':
-                            partition_table[i+1][j].append('void')
-                            
-                        elif partition_table[i-1][j][-1]=='void':
-                            partition_table[i+1][j].append('void')
-                            
-                        else:
-                            partition_table[i+1][j].append('stop')
-                    j=j+1
-                elif k>0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-2][j][-1]=='stop':
-                            partition_table[i][j].append('void')
-                            
-                        elif partition_table[i-2][j][-1]=='void':
-                            partition_table[i][j].append('void')
-                            
-                        else:
-                            partition_table[i][j].append('stop')
-                            
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-2][j][-1]=='stop':
-                            partition_table[i+1][j].append('void')
-                            
-                        elif partition_table[i-2][j][-1]=='void':
-                            partition_table[i+1][j].append('void')
-                            
-                        else:
-                            partition_table[i+1][j].append('stop')
-                    j=j+1    
-                elif k<0 :
-                    if partition_table[i][j]!='skip' and isStopCondition(partition_table[i][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
-                            partition_table[i][j].append('void')
-                            
-                        elif partition_table[i-4][j][-1]=='void':
-                            partition_table[i][j].append('void')
-                            
-                        else:
-                            partition_table[i][j].append('stop')
-                            
-                    if partition_table[i+1][j]!='skip' and isStopCondition(partition_table[i+1][j],all_classValues)==True:
-                        if partition_table[i-4][j][-1]=='stop':
-                            partition_table[i+1][j].append('void')
-                            
-                        elif partition_table[i-4][j][-1]=='void':
-                            partition_table[i+1][j].append('void')
-                            
-                        else:
-                            partition_table[i+1][j].append('stop')
-                    
-                    j=j+1    
-        if i==0:
-            i=i+1
-        elif i==1:
-            i=i+2
-        else:
-            k=k*-1
-            i=i+2
-        print(str(i))
-        print(len(partition_table))
-    print('added flags to table')
-    #calculate gain using tabular logic find parent and sibling for each stop
-    #strip table
-    #print(partition_table)
-    gains=[]
-    partitions=[]
-    i=0
-    j=0
-    while i < len(partition_table):
-        j=0
-        while j < 2 :
-            if i==0:
-                if  partition_table[i][0][-1]=='stop' and partition_table[i][1][-1]=='stop':
-                        partitions.append(partition_table[i][0][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i][1][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+2
-                        k=1
-                        print('found stops i=0')
-                elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])
-                        gains.append(ig)
-                        k=1
-                        j=j+1
-                        print('found stops i=0')
-                else:
-                    j=j+1
-            elif i==1:
-                if i+1<len(partition_table):
-                    if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-1][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+1
-                        print('found stops i=1')  
-                    elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-1][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    elif partition_table[i+1][j][-1]=='stop':
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-1][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    else:j=j+1
-                else:
-                    break
-            elif k>0 :
-                if i+1<len(partition_table):
-                    if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+1
-                        print('found stops i=1')  
-                    elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    elif partition_table[i+1][j][-1]=='stop':
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    else:j=j+1
-                else:
-                    break     
-            elif k<0 :
-                if i+1<len(partition_table):
-                    if partition_table[i][j][-1]=='stop' and  partition_table[i+1][j][-1] =='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        gains.append('n/a')
-                        j=j+1
-                        print('found stops i=1')  
-                    elif partition_table[i][j][-1]=='stop':
-                        partitions.append(partition_table[i][j][:len(partition_table[i][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    elif partition_table[i+1][j][-1]=='stop':
-                        partitions.append(partition_table[i+1][j][:len(partition_table[i+1][j])-1])
-                        ig=info_gain(len(partition_table[i-4][j]),partition_table[i][j],partition_table[i+1][j])
-                        gains.append(ig)
-                        j=j+1
-                        print('found stops i=1')
-                    else:j=j+1
-                else:
-                    break     
-        if i==0:
-            i=i+1
-        elif i==1:
-            i=i+2
-        else:
-            k=k*-1
-            i=i+2
-        
-                  
-    return partitions,gains
 
 def entropy_discretization(attributeValues:list):
     partitionCols=[]
     partitions=[]
+    
     classValues=attributeValues[0]
     for col in range(1,len(attributeValues)):
         partitionCols.append(createPartionColumn(attributeValues[col],classValues))
     print('partion columns created')
     for i in range(len(partitionCols)):
         #do med
-        med_parts,med_gains=medianPartition(partitionCols[i],classValues)
+        med_parts,med_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMed)
         print(len(med_parts))
         print('med '+str(i)+' run done')
-        #cal total med gain
-        t_med_gain=0
-        for gain in med_gains:
-            if gain!='n/a':
-                t_med_gain=t_med_gain+gain
+        if i==2:
+            mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
         #do mean
-        mean_parts,mean_gains=meanPartition(partitionCols[i],classValues)
-        print(len(mean_parts))
-        print('mean '+str(i)+' run done')
-        #calc total mean gain
-        t_mean_gain=0
-        for gain in mean_gains:
-            if gain!='n/a':
-                t_mean_gain=t_mean_gain+gain
+        mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
+        
+       
         #add max gain partitions to partitions
-        if t_med_gain>t_mean_gain:
+        if med_gain>mean_gain:
             partitions.append(med_parts)
         else:
             partitions.append(mean_parts)
     #discretize
-    print(partitions[0])
-    print(partitions[0][1][0][1])
+   
     for i in range(len(partitions)):
         inc=1
         for j in range(len(partitions[i])):
@@ -701,8 +301,6 @@ def entropy_discretization(attributeValues:list):
             helper_arr=helper_arr+part
         finpartitionCols.append(helper_arr)    
     print(len(finpartitionCols))    
-    print(finpartitionCols[0])
-    print(finpartitionCols[0][0])
     #sort partition
     for partitionCol in range(len(finpartitionCols)):
         for partition in range(len(finpartitionCols[partitionCol])):
