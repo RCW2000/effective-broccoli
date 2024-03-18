@@ -1,6 +1,8 @@
 import csv
 import math
 import PySimpleGUI as sg
+import DM_Assignment_1 as dm
+import texttable as tt
 class DataTable:
     def __init__(self, originalData:list):
         self.columnHeaders=originalData[0]
@@ -20,6 +22,12 @@ class DataTable:
         self.dupedRecords=None
         self.trainData=None
         self.testData=None
+        self.CorelationMatrix=None
+        self.redundantAttr=None
+        self.corrMatrixTXT=None
+        self.partitions=None
+        self.namedDisTbl=None
+        self.unNamedDistTbl=None
 
 
 def Generate_Table_From_CSV(filepath):
@@ -88,6 +96,27 @@ def generate_Discretization_Report(dataTable:DataTable):
         DisText=DisText+str(duped_records[i])+"\n"
     dataTable.discretizationText=DisText
 
+def generate_Corelation_Matrix_Report(dataTable:DataTable,threshold):
+    print(dataTable.redundantAttr)
+    matrix=dataTable.CorelationMatrix
+    head=dataTable.columnHeaders[1:]
+    dataTable.corrMatrixTXT=""
+    for i in range(len(head)):
+        dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+str(head[i])+" "
+    for l in range(len(matrix)):
+        dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+"\n" + str(head[i]) +" "
+        for j in range(len(matrix)):
+            dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+str(matrix[l][j])+" "
+    dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+"\nThreshold Value: "+str(threshold)+"\nHighly Correlated Attributes:\n"
+    if len(dataTable.redundantAttr) >0:
+        for i in range(len(dataTable.redundantAttr)):
+            dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+str(head[dataTable.redundantAttr[i][0]])+" <-> "+str(head[dataTable.redundantAttr[i][1]])+" Correlation Value: "+str(matrix[dataTable.redundantAttr[i][0]][dataTable.redundantAttr[i][1]])+"\n"
+    else: 
+        "None"
+    return dataTable.corrMatrixTXT
+    
+
+
 def tagSort(data:list):
     tags=[i for i in range(len(data))]
     for i in range(len(data)):
@@ -153,3 +182,58 @@ def DownloadData(Data, headers, filepath):
         writer.writerow(headers)
         writer.writerows(Data)
     print('FIle Saved')
+
+def textTable(data:list,headers:list):
+    tabletxt=""
+    for i in range(len(headers)):
+        tabletxt=tabletxt+str(headers[i])+" "
+    for i in range(len(data)):
+        tabletxt=tabletxt+"\n"+str(data[i])
+    return tabletxt
+
+def support(Freq,data:list):
+    return Freq/len(data)
+
+def confidence(Freq, data:list,A):
+    ct=0
+    for i in range(len(data)):
+        if A in data[i]:
+            ct=ct+1
+    if ct==0:
+        return 0
+    return Freq/ct
+
+def freqAUB(A,B,data):
+    ct=0
+    for i in range(len(data)):
+        if A in data[i] and B in data[i]:
+            ct=ct+1
+    return ct
+def associationCalc(rules,data:list):
+    confidences=[]
+    supports=[]
+    for i in range(len(rules)):
+        A=rules[i][0]
+        B=rules[i][1]
+        freq=freqAUB(A,B,data)
+        confidences.append(confidence(freq,data,A))
+        supports.append(support(freq,data))
+    return confidences,supports
+
+def nameToAttribute(namedList,name):
+    for i in range(len(namedList)):
+        if name in namedList[i]:
+            return namedList[i][0]
+
+def nameToValue(namedList,name):
+    for i in range(len(namedList)):
+        if name in namedList[i]:
+            return namedList[i][1]
+        
+def nameToRange(namedList,name):
+    for i in range(len(namedList)):
+        if name in namedList[i]:
+            return namedList[i][3]
+        
+#def valueToName(namedList)
+    

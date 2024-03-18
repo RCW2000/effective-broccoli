@@ -195,17 +195,68 @@ while True:  # Event Loop
         sg.popup_scrolled(dataTable.discretizationText,title="Discretization Duplicate Removal Report",size=(100,125))
     elif event=='p1B3':
         #discretized values
-        dataTable.currentAttributeValues,dataTable.discretizedRecords=dm.entropy_discretization(dataTable.currentAttributeValues)
+        dataTable.currentAttributeValues,dataTable.discretizedRecords=dm.entropy_discretization(dataTable.currentAttributeValues,dataTable)
         #update table
         window['OG_Table'].update(values=dataTable.discretizedRecords)
     elif event=='p2B0':
         #train/test Split
        dataTable.trainData,dataTable.testData=dm.TTSplit(dataTable.discretizedRecords,0.10)
+       dataTable.currentAttributeValues=util.record_to_values(dataTable.trainData)
        window['OG_Table'].update(values=dataTable.trainData)
     elif event=='p2B1':
        util.DownloadData(dataTable.trainData,dataTable.columnHeaders,values['p2I0'])     
        util.DownloadData(dataTable.testData,dataTable.columnHeaders,values['p2I1'])  
-
-
+    elif event=='p2B2':
+        dataTable.CorelationMatrix,dataTable.redundantAttr=dm.IdentifyRedundancies(dataTable.currentAttributeValues[1:],float(values['p2I2']))
+        sg.popup_scrolled(util.generate_Corelation_Matrix_Report(dataTable,float(values['p2I2'])), title='Correlation Matrix Report',size=(100,300))
+    elif event=='p2B3':
+        sg.popup_scrolled(util.generate_Corelation_Matrix_Report(dataTable,float(values['p2I2'])), title='Correlation Matrix Report',size=(100,300))
+    elif event=='p2B4':
+        rmv=dm.removeRedundancies(dataTable.redundantAttr,len(dataTable.columnHeaders)-1)
+        nonRedundantVal=[dataTable.currentAttributeValues[i] for i in range(len(dataTable.currentAttributeValues)) if i not in rmv]
+        nonRedundantrecords=[dataTable.trainData[i] for i in range(len(dataTable.trainData))]
+        print(rmv)
+        for j in nonRedundantrecords:
+            for i in rmv:
+                j.pop(i)
+        new_headers=dataTable.columnHeaders
+        for i in rmv:
+            del new_headers[i]
+        #print(nonRedundantrecords)
+        dataTable.currentAttributeValues=nonRedundantVal
+        sg.popup_scrolled(util.textTable(nonRedundantrecords,new_headers),title='Data Table',size=(100,100))
+    elif event=='p2B6':
+        sg.popup_scrolled(dm.generateUnNamedTable(dataTable),title='Unnamed Discrete Value Table',size=(100,300))
+    elif event=='p2B7':
+        sg.popup_scrolled(dm.generateNamedTable(dataTable),title='Named Discrete Value Table',size=(100,300))
+    elif event=='p2B5':
+        r, sr, t=dm.GenerateAssociationRules(cleanSet,float(values['p2I3']),nonRedundantrecords)
+        #generate rules
+    elif event=='p2B8':
+        its=dm.ConvertRecord_to_itemset(new_headers,nonRedundantrecords,dataTable.namedDisTbl)
+        #show frq itemsets
+        Fits=dm.Apriori(its)
+        sg.popup_scrolled(dm.generateItemset(Fits),title='Frequent Itemset',size=(100,300))
+    elif event=='p2B9':
+        cleanSet,txt=dm.cleanFreqItemSet(Fits,nonRedundantrecords)
+        #clean itemsets
+        sg.popup_scrolled(txt,title='Cleaned Frequent Itemset',size=(100,300))
+    elif event=='p2B10':
+        #show rules
+        sg.popup_scrolled(t,title='All Rules',size=(100,300))
+    elif event=='p2B11':
+        #show survived rules
+        if values['p2R0']==True:
+            format='None'
+        elif values['p2R1']==True:
+            format='Format-1'
+        elif values['p2R2']==True:
+            format='Format-2'
+        srwftxt=dm.generateSurvRules(sr,dataTable.namedDisTbl,format,values['p2I3'],nonRedundantrecords)
+        sg.popup_scrolled(srwftxt,title='Survived Rules '+str(format),size=(100,300))
+        
+    
+        
+        
 
 window.close()
