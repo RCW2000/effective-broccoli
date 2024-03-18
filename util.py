@@ -8,13 +8,18 @@ class DataTable:
         self.OriginalAttributeValues=originalData[2]
         self.OriginalTable=originalData[3]
         self.currentAttributeValues=self.OriginalAttributeValues
-        self.dataNoOutliers=[]
-        self.outliers=[]
-        self.outlierRecords=[]
+        self.dataNoOutliers=None
+        self.outliers=None
+        self.outlierRecords=None
         self.sansOutlierTable=None
         self.outlierRemovalReport=None
         self.RMV_txt=""
-        self.discretizedRecords=[]
+        self.discretizedRecords=None
+        self.discretizedNoDups=None
+        self.discretizationText=None
+        self.dupedRecords=None
+        self.trainData=None
+        self.testData=None
 
 
 def Generate_Table_From_CSV(filepath):
@@ -71,6 +76,18 @@ def generate_Outlier_Report(dataTable:DataTable):
     OutlierText=OutlierText+"\nTotal Records Removed: "+str(len(rmv_records))+" Total Records Remaining: "+str(len(dataTable.OriginalRecords)-len(rmv_records))
     dataTable.outlierRemovalReport=OutlierText
 
+def generate_Discretization_Report(dataTable:DataTable):
+    #discretized_records=dataTable.discretizedRecords
+    #discretized_recordsNoDupes=dataTable.discretizedNoDups
+    duped_records=dataTable.dupedRecords
+    DisText=str(len(duped_records))+" record(s) were removed due to duplication.\n"
+    #number of records removed
+    DisText=DisText+"The Following Records were Removed:\n"
+    #records affected
+    for i in range(len(duped_records)):
+        DisText=DisText+str(duped_records[i])+"\n"
+    dataTable.discretizationText=DisText
+
 def tagSort(data:list):
     tags=[i for i in range(len(data))]
     for i in range(len(data)):
@@ -110,13 +127,13 @@ def record_to_values(record:list):
 def values_to_records(values:list):
     records=[]
     inc=0
-    helperArr=[]
-    while inc < len(values[0]):
-        for col in range(len(values)):
-            helperArr.append(values[col][inc])
-        records.append(helperArr)
-        helperArr=[]
+    classes=values[0]
+    records=[[classes[i]] for i in range(len(classes))]
+    for i in range(len(records)):
+        for j in range(1,len(values)):
+              records[i]=records[i]+[values[j][inc][1]]
         inc=inc+1
+    print(records)
     return records
 
 def partitionMed(partitionCol:list):
@@ -126,3 +143,13 @@ def partitionMed(partitionCol:list):
 def partitionMean(partitionCol:list):
     av=[partitionCol[i][1] for i in range(len(partitionCol))]
     return mean(av)
+
+def orderRecords(records):
+    return records[0]
+
+def DownloadData(Data, headers, filepath):
+    with open(filepath,'w') as csvfile:
+        writer=csv.writer(csvfile)
+        writer.writerow(headers)
+        writer.writerows(Data)
+    print('FIle Saved')

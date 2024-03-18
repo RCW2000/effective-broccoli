@@ -19,10 +19,8 @@ p1_tab=[
     ])],
 
     [sg.Frame('Discretization', layout=[
-        [sg.Button('Calculate Median',key='p1B2'),sg.Text(key='p1T0')],#median value
-        [sg.Text('Enter Threshold Values (Separate by Commas)')],
-        [sg.Input(key='p1I0')],
         [sg.Button('Run (Entropy-Based)',key='p1B3')],
+        [sg.Button('Remove Duplicate Data',key='p1B2')],
         [sg.Button('Show Discretized Data',key='p1B4')]#popup
     ])]
 ]
@@ -40,9 +38,9 @@ format 1 and format 2 lists
 p2_tab=[
     [sg.Frame('Data Split', layout=[
         [sg.Text('Enter Training Set Filename')],
-        [sg.Input(key='p2I0')],
+        [sg.Input('Econ-TRAIN.csv',key='p2I0')],
         [sg.Text('Enter Testing Set Filename')],
-        [sg.Input(key='p2I1')],
+        [sg.Input('Econ-TEST.csv',key='p2I1')],
         [sg.Button('Run Train/Test Split',key='p2B0')],
         [sg.Button('Download Data',key='p2B1')]
     ])],
@@ -179,14 +177,35 @@ while True:  # Event Loop
         util.generate_Outlier_Report(dataTable)
         sg.popup_scrolled(dataTable.outlierRemovalReport,title="Outlier Removal Report",size=(100,125))
     elif event=='p1B2':
-        #calculate Median
-        medians=dm.findMedians(dataTable)
-        print(medians)
-        window['p1T0'].update(medians[1:])
+        #remove dupes
+        dataTable.discretizedNoDups=[]
+        dontadd=['n/a']
+        for i in range(len(dataTable.discretizedRecords)):
+            if dataTable.discretizedRecords[i] not in dontadd:
+                if dataTable.discretizedRecords.count(dataTable.discretizedRecords[i])==1:
+                    dataTable.discretizedNoDups.append(dataTable.discretizedRecords[i])
+                else:
+                    dataTable.discretizedNoDups.append(dataTable.discretizedRecords[i])
+                    dontadd.append(dataTable.discretizedRecords[i])
+
+        dataTable.dupedRecords=dontadd[1:]
+        dataTable.currentAttributeValues=util.record_to_values(dataTable.discretizedNoDups)
+        window['OG_Table'].update(values=dataTable.discretizedNoDups)
+        util.generate_Discretization_Report(dataTable)
+        sg.popup_scrolled(dataTable.discretizationText,title="Discretization Duplicate Removal Report",size=(100,125))
     elif event=='p1B3':
         #discretized values
         dataTable.currentAttributeValues,dataTable.discretizedRecords=dm.entropy_discretization(dataTable.currentAttributeValues)
         #update table
         window['OG_Table'].update(values=dataTable.discretizedRecords)
+    elif event=='p2B0':
+        #train/test Split
+       dataTable.trainData,dataTable.testData=dm.TTSplit(dataTable.discretizedRecords,0.10)
+       window['OG_Table'].update(values=dataTable.trainData)
+    elif event=='p2B1':
+       util.DownloadData(dataTable.trainData,dataTable.columnHeaders,values['p2I0'])     
+       util.DownloadData(dataTable.testData,dataTable.columnHeaders,values['p2I1'])  
+
+
 
 window.close()

@@ -1,6 +1,7 @@
 import csv
 import util
 import math
+import random
 def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight rows to be romoved on figure
     attributeValues=dataTable.currentAttributeValues
     std_devs=[]
@@ -75,8 +76,12 @@ def isStopCondition(partitionCol:list,OriginalValues):
     if m<2:
         return True
     if min(pi)/max(pi) <0.5:
-        if m < math.floor(len(list(set(OriginalValues)))/2) or m==math.floor(len(list(set(OriginalValues)))/2):
-            return True
+        return True
+    if m < math.floor(len(list(set(OriginalValues)))/2) or m==math.floor(len(list(set(OriginalValues)))/2):
+        return True
+    if len(list(set(av)))==1:
+        return True
+    
     return False
 
 def Partition(partitionCol:list,OriginalValues,Partfunction):
@@ -253,11 +258,8 @@ def Partition(partitionCol:list,OriginalValues,Partfunction):
     for i in range(len(finPartitions)):
         if finPartitions[i][1]!='No Skip' and finPartitions[i][1]!='Duplicate' and finPartitions[i][1]!=False:
             tot_gains=tot_gains+finPartitions[i][1]
-    partitions=[]
-    for i in range(len(finPartitions)):
-        for j in range(len(finPartitions[i][0])):
-            partitions.append(finPartitions[i][0][j][:-1])
-    return partitions,tot_gains
+        finPartitions[i]=finPartitions[i][0]
+    return finPartitions,tot_gains
 
 
 def entropy_discretization(attributeValues:list):
@@ -273,8 +275,8 @@ def entropy_discretization(attributeValues:list):
         med_parts,med_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMed)
         print(len(med_parts))
         print('med '+str(i)+' run done')
-        if i==2:
-            mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
+        #if i==3:
+          #  mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
         #do mean
         mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
         
@@ -285,34 +287,59 @@ def entropy_discretization(attributeValues:list):
         else:
             partitions.append(mean_parts)
     #discretize
-   
-    for i in range(len(partitions)):
+    print(partitions[0])
+    #print(partitions[0][0])
+    #print(partitions[0][0][0])
+    #print(partitions[0][0][0][0])
+    inc=1
+    for i in range(len(partitions)):#all 7 fin parts
+        for j in range(len(partitions[i])): #each part in a given fin part
+                for k in range(len(partitions[i][j])): #the second val in each part
+                    partitions[i][j][k][1]=inc
+                inc=inc+1
         inc=1
-        for j in range(len(partitions[i])):
-            for k in range(len(partitions[i][j])):
-                partitions[i][j][k][1]=inc
-            inc=inc+1
-    finpartitionCols=[]
+    finpartitionCols=partitions
+    print(finpartitionCols[0])
     print('discretization done')
     #collapse partitions together
-    for i in range(len(partitions)):
+    helper_arr=[]
+    CollapsePartitions=[]
+    for i in range(len(finpartitionCols)):
+        for j in range(len(finpartitionCols[i])):
+            helper_arr=helper_arr+finpartitionCols[i][j]
+        CollapsePartitions.append(helper_arr)
         helper_arr=[]
-        for part in partitions[i]:
-            helper_arr=helper_arr+part
-        finpartitionCols.append(helper_arr)    
+    
     print(len(finpartitionCols))    
+    #print(finpartitionCols[0])
     #sort partition
-    for partitionCol in range(len(finpartitionCols)):
-        for partition in range(len(finpartitionCols[partitionCol])):
-            for i in range(len(finpartitionCols[partitionCol][partition])):
-                for j in range(i+1,len(finpartitionCols[partitionCol][partition])):
-                    if finpartitionCols[partitionCol][partition][i][0] > finpartitionCols[partitionCol][partition][j][0]:
-                        finpartitionCols[partitionCol][partition][i], finpartitionCols[partitionCol][partition][j] = finpartitionCols[partitionCol][partition][j], finpartitionCols[partitionCol][partition][i]
+    for i in range(len(CollapsePartitions)):
+        CollapsePartitions[i].sort(key=util.orderRecords)
+    
+    print(CollapsePartitions)
     print('sort done')
     #clean collumns together
+    
     discretizedCols=[]
-    discretizedCols=discretizedCols+classValues#addAtribute0
-    for i in range(len(finpartitionCols)):
-        discretizedCols=discretizedCols+finpartitionCols[i][1]
-    print('return ready')
+    for i in range(len(CollapsePartitions)+1):
+        if i==0:
+            discretizedCols.append(classValues)
+        else: 
+            discretizedCols.append(CollapsePartitions[i-1])
+    #rint('return ready')
+    print(discretizedCols)
+    
+    
     return discretizedCols,util.values_to_records(discretizedCols)
+
+def TTSplit(records:list, percent):
+    data0=[records[i] for i in range(len(records)) if records[i][0]==0.0] 
+    data1=[records[i] for i in range(len(records)) if records[i][0]==1.0] 
+    data0num=int(len(data0)*percent)
+    data1num=int(len(data1)*percent)
+    testData=[]
+    for i in range(data0num+data1num):
+        testData.append(random.sample(data0,data0num))
+        testData.append(random.sample(data1,data1num))
+    trainData=[records[i] for i in range(len(records)) if records[i] not in testData]
+    return trainData,testData
