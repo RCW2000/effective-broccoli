@@ -78,7 +78,11 @@ def isStopCondition(partitionCol:list,OriginalValues):
             return True
     return False
 
+<<<<<<< Updated upstream
 def Partition(partitionCol:list,OriginalValues,function):
+=======
+def Partition(partitionCol:list,all_classValues):
+>>>>>>> Stashed changes
     #create table to hold partioned sets where each r/c = A11A21 etc
     partition_table=[[0 for i in range(2)] for i in range(len(partitionCol))]
     print('created table: '+str(len(partition_table)))
