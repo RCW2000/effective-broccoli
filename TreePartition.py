@@ -18,8 +18,8 @@ class PartitionNode:
             self.card=len(self.values)
         else:
             self.values=data[:][1]
-            self.uniqueClasses=list(set(data[:][2]))
-            self.card=len(self.values)
+            self.uniqueClasses=list(set([data[2] for data in self.data]))
+            self.card=len([data[1] for data in self.data])
         
         if isRoot==False:
             self.isStopped=self.STOP()
@@ -49,11 +49,11 @@ class PartitionNode:
             
             freq=[]
             for value in self.uniqueClasses:
-                freq.append(self.data[:][2].count(value))
+                freq.append([data[2] for data in self.data].count(value))
             self.classFrequencies=freq
 
             if min(freq)/max(freq) <0.5:
-                if len(self.uniqueClasses) < math.Floor(n/2) or len(self.uniqueClasses) == math.Floor(n/2):
+                if len(self.uniqueClasses) < math.floor(n/2) or len(self.uniqueClasses) == math.floor(n/2):
                     self.color='purple'
                     return True
             
@@ -68,7 +68,9 @@ class PartitionNode:
 
 class PartitionTree:
     def __init__(self,data:list):
+        #print("hello")
         self.root=PartitionNode(data,True)
+        #print(len(self.root.data))
         self.nodes=[]
         self.medfinPartitions=[]
         self.medPartitions=[]
@@ -79,42 +81,53 @@ class PartitionTree:
         self.gains=self.InfoGain()
         if  self.gains[0] >self.gains[1]:
             self.finPartitions=[self.medfinPartitions[i].data for i in range(len(self.medfinPartitions))]
+            #print(len(self.medfinPartitions[0].data))
         else:
             self.finPartitions=[self.meanfinPartitions[i].data for i in range(len(self.meanfinPartitions))]
-            
+            #print(len(self.meanfinPartitions[0].data))
+        #print(self.finPartitions)
 
 
     def Partition(self,function):
         #bfs 
-        finPartitions=[]
         closed=set()
         fringe=[]
-        fringe.append((self.root,self.nodes,finPartitions))
+        fringe.append((self.root,self.nodes))
         while(True):
+            #print('yo')
             if len(fringe)==0:
-                return finPartitions,partitions
-            node,partitions,finPartitions=fringe.pop(0)
+                return self.medfinPartitions,partitions
+            node,partitions=fringe.pop(0)
             if node.color=='purple':
                 node.infogain=(((node.card/node.parent.card)*node.entropy) + ((node.sibling.card/node.parent.card)*node.sibling.entropy))
-                finPartitions.append(node)
+                if function==util.median:
+                    self.medfinPartitions.append(node)
+                elif function==util.mean:
+                     self.meanfinPartitions.append(node)
                 continue
             elif node.parent!=None and node.grandparent!=None and node.card==node.parent.card:
                 node.color='black'
                 node.parent.color='purple'
                 node.parent.infogain=(((node.parent.card/node.grandparent.card)*node.parent.entropy) + ((node.titi.card/node.grandparent.card)*node.titi.entropy))
-                finPartitions.append(node.parent)
+                if function==util.median:
+                    self.medfinPartitions.append(node.parent)
+                elif function==util.mean:
+                     self.meanfinPartitions.append(node.parent)
                 continue
             elif node.parent!=None and node.grandparent!=None and node.card<1:
                 node.color='black'
                 node.parent.color='purple'
                 node.parent.infogain=(((node.parent.card/node.grandparent.card)*node.parent.entropy) + ((node.titi.card/node.grandparent.card)*node.titi.entropy))
-                finPartitions.append(node.parent)
+                if function==util.median:
+                    self.medfinPartitions.append(node.parent)
+                elif function==util.mean:
+                     self.meanfinPartitions.append(node.parent)
                 continue
             if str(node) not in closed:
                 closed.add(str(node))
-                if node.color=='blue':
+                if node.color=='blue' and node.card>0:
                     for state in node.splitNode(function(node.values),self.root):
-                        fringe.append((state,partitions+[node],finPartitions))
+                        fringe.append((state,partitions+[node]))
 
     def InfoGain(self):
         medgain=0

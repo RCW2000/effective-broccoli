@@ -142,6 +142,9 @@ def median(data:list):
     else:
         medianInd_1=math.floor(len(Ordered_Data)/2)
         medianInd_2=math.ceil(len(Ordered_Data)/2)
+        #print(medianInd_1)
+        #print(medianInd_2)
+        #print(len(Ordered_Data))
         return (float(Ordered_Data[medianInd_1-1])+float(Ordered_Data[medianInd_2-1]))/2
     
 def record_to_values(record:list):
@@ -162,7 +165,7 @@ def values_to_records(values:list):
         for j in range(1,len(values)):
               records[i]=records[i]+[values[j][inc][1]]
         inc=inc+1
-    print(records)
+    #print(records)
     return records
 
 def partitionMed(partitionCol:list):

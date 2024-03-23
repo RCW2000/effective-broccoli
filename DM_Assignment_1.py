@@ -282,7 +282,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
         #do mean
        # mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
         
-       
+        #print(len(partitionCols[i]))
         #add max gain partitions to partitions
         #if med_gain>mean_gain:
          #   partitions.append(med_parts)
@@ -312,18 +312,24 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
         ranges.append('Class Value')
 
 
-    inc=1
+    print(len(dataTable.partitions))
+    print(len(dataTable.partitions[0]))
+    print(len(dataTable.partitions[0][0]))
+    print(len(dataTable.partitions[0][0][0]))
+    print(dataTable.partitions[0][0][0][0])
     for i in range(len(dataTable.partitions)):#all 7 fin parts
-        for j in range(len(dataTable.partitions[i])): #each part in a given fin part
-                numParts.append(headers[i+1])
-                rangersHelper=[]
-                for k in range(len(dataTable.partitions[i][j])): #the second val in each part
-                    rangersHelper.append(dataTable.partitions[i][j][k][1])
-                    dataTable.partitions[i][j][k][1]=inc
-                unqDistValues.append(inc)    
-                ranges.append(rangersHelper)
-                inc=inc+1
         inc=1
+        for j in range(len(dataTable.partitions[i])): #each part in a given fin part
+            print(inc)
+            numParts.append(headers[i+1])
+            rangersHelper=[]
+            for k in range(len(dataTable.partitions[i][j])): #the second val in each part
+                rangersHelper.append(dataTable.partitions[i][j][k][1])
+                dataTable.partitions[i][j][k][1]=inc
+            unqDistValues.append(inc)    
+            ranges.append(rangersHelper)
+            inc=inc+1
+        
 
     for i in range(len(numParts)):
         unNamedRecord.append([numParts[i],unqDistValues[i],str(min(ranges[i]))+" - "+str(max(ranges[i]))])
@@ -343,7 +349,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
         #print(CollapsePartitions[i])
         helper_arr=[]
     
-    print(len(finpartitionCols))    
+    #print(len(finpartitionCols))    
     #print(finpartitionCols[0])
     #sort partition
     for i in range(len(CollapsePartitions)):
@@ -365,7 +371,8 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     
     
     return discretizedCols,util.values_to_records(discretizedCols)
-
+def setVal(inc):
+    return inc
 def TTSplit(records:list, percent):
     data0=[records[i] for i in range(len(records)) if records[i][0]==0.0] 
     data1=[records[i] for i in range(len(records)) if records[i][0]==1.0] 
