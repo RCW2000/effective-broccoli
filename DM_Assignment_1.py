@@ -2,6 +2,7 @@ import csv
 import util
 import math
 import random
+import TreePartition as pt
 from itertools import combinations, permutations
 def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight rows to be romoved on figure
     attributeValues=dataTable.currentAttributeValues
@@ -273,22 +274,23 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     print('partion columns created')
     for i in range(len(partitionCols)):
         #do med
-        med_parts,med_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMed)
-        print(len(med_parts))
-        print('med '+str(i)+' run done')
+        #med_parts,med_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMed)
+        #print(len(med_parts))
+        #print('med '+str(i)+' run done')
         #if i==3:
           #  mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
         #do mean
-        mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
+       # mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
         
        
         #add max gain partitions to partitions
-        if med_gain>mean_gain:
-            partitions.append(med_parts)
-        else:
-            partitions.append(mean_parts)
+        #if med_gain>mean_gain:
+         #   partitions.append(med_parts)
+        #else:
+        #    partitions.append(mean_parts)
+        partitions.append(pt.PartitionTree(partitionCols[i]).finPartitions)
     #discretize
-    print(partitions[0])
+    #print(partitions[0])
     #print(partitions[0][0])
     #print(partitions[0][0][0])
     #print(partitions[0][0][0][0])
@@ -338,6 +340,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
         for j in range(len(finpartitionCols[i])):
             helper_arr=helper_arr+finpartitionCols[i][j]
         CollapsePartitions.append(helper_arr)
+        #print(CollapsePartitions[i])
         helper_arr=[]
     
     print(len(finpartitionCols))    
@@ -345,8 +348,9 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     #sort partition
     for i in range(len(CollapsePartitions)):
         CollapsePartitions[i].sort(key=util.orderRecords)
+        #print(CollapsePartitions[0])
     
-    print(CollapsePartitions)
+    #print(CollapsePartitions)
     print('sort done')
     #clean collumns together
     
