@@ -316,7 +316,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     print(len(dataTable.partitions[0]))
     print(len(dataTable.partitions[0][0]))
     print(len(dataTable.partitions[0][0][0]))
-    print(dataTable.partitions[0][0][0][0])
+    #print(dataTable.partitions[0][0][0][0])
     for i in range(len(dataTable.partitions)):#all 7 fin parts
         inc=1
         for j in range(len(dataTable.partitions[i])): #each part in a given fin part
@@ -378,10 +378,7 @@ def TTSplit(records:list, percent):
     data1=[records[i] for i in range(len(records)) if records[i][0]==1.0] 
     data0num=int(len(data0)*percent)
     data1num=int(len(data1)*percent)
-    testData=[]
-    for i in range(data0num+data1num):
-        testData.append(random.sample(data0,data0num))
-        testData.append(random.sample(data1,data1num))
+    testData=random.sample(data0,data0num)+random.sample(data1,data1num)
     trainData=[records[i] for i in range(len(records)) if records[i] not in testData]
     return trainData,testData
 
