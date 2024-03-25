@@ -82,8 +82,7 @@ p3_tab=[
     ])],
 
     [sg.Frame('Predictions', layout=[
-        [sg.Button('Make Predictions',key='p3B2')],
-        [sg.Button('Show Prediction Matrix',key='p3B3')]
+        [sg.Button('Make Predictions',key='p3B2')]
     ])]
 
 
