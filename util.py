@@ -200,7 +200,7 @@ def support(Freq,data:list):
 def confidence(Freq, data:list,A):
     ct=0
     for i in range(len(data)):
-        if A in data[i]:
+        if len(set(A).intersection(set(data[i])))>0 :
             ct=ct+1
     if ct==0:
         return 0
@@ -209,7 +209,7 @@ def confidence(Freq, data:list,A):
 def freqAUB(A,B,data):
     ct=0
     for i in range(len(data)):
-        if A in data[i] and B in data[i]:
+        if len(set(A).intersection(set(data[i])))>0  and len(set(B).intersection(set(data[i])))>0:
             ct=ct+1
     return ct
 def associationCalc(rules,data:list):
@@ -223,20 +223,22 @@ def associationCalc(rules,data:list):
         supports.append(support(freq,data))
     return confidences,supports
 
-def nameToAttribute(namedList,name):
-    for i in range(len(namedList)):
-        if name in namedList[i]:
-            return namedList[i][0]
+def nameToAttribute(nameTable,name):
+    for i in range(len(nameTable)):
+        if len(set(name).intersection(set(nameTable[i])))>0:
+            return nameTable[i][0]
 
-def nameToValue(namedList,name):
-    for i in range(len(namedList)):
-        if name in namedList[i]:
-            return namedList[i][1]
+def nameToValue(nameTable,name):
+    for i in range(len(nameTable)):
+        if len(set(name).intersection(set(nameTable[i])))>0:
+            return nameTable[i][1]
         
-def nameToRange(namedList,name):
-    for i in range(len(namedList)):
-        if name in namedList[i]:
-            return namedList[i][3]
+def nameToRange(nameTable,name):
+    for i in range(len(nameTable)):
+        if len(set(name).intersection(set(nameTable[i])))>0:
+            return nameTable[i][3]
         
-#def valueToName(namedList)
+#def massNameToValue(namedTable, names):
+    #values=[]
+    #for i in range(len(names)):
     

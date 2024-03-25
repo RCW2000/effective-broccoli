@@ -21,7 +21,8 @@ p1_tab=[
     [sg.Frame('Discretization', layout=[
         [sg.Button('Run (Entropy-Based)',key='p1B3')],
         [sg.Button('Remove Duplicate Data',key='p1B2')],
-        [sg.Button('Show Discretized Data',key='p1B4')]#popup
+        [sg.Button('Show Unnamed Discrete Value Table',key='p2B6')],
+        [sg.Button('Show Named Discrete Value Table',key='p2B7')]
     ])]
 ]
 #Part2
@@ -55,22 +56,19 @@ p2_tab=[
     ])],
 
     [sg.Frame('Associations', layout=[
+        [sg.Button('Show Identified Frequent Itemsets',key='p2B8')],
+        [sg.Button('Clean Itemsets',key='p2B9')], #removal popup
         [sg.Text('Enter Confidence Treshold')],
         [sg.Input(key='p2I3')],
         [sg.Button('Generate Rules',key='p2B5')],
-        [sg.Button('Show Unnamed Discrete Value Table',key='p2B6')],
-        [sg.Button('Show Named Discrete Value Table',key='p2B7')],
-        [sg.Button('Show Identified Frequent Itemsets',key='p2B8')],
-        [sg.Button('Clean Itemsets',key='p2B9')], #removal popup
         [sg.Button('Show All Rules',key='p2B10')],
         [sg.Text('Select Format')],
         [sg.Radio('None',0,key='p2R0')],
         [sg.Radio('Format-1',0,key='p2R1')],
         [sg.Radio('Format-2',0,key='p2R2')],
         [sg.Button('Show Survived Rules',key='p2B11')]#removal popup
-    ])],
+    ])]
 
-    [sg.Button('Generate Report',key='p2B12')]
 ]
 #Part3
 """
@@ -84,13 +82,11 @@ p3_tab=[
     ])],
 
     [sg.Frame('Predictions', layout=[
-        [sg.Button('Finalize Format-1-Rules',key='p3B0')], #rules popup
-        [sg.Button('Show Format-1-Rules',key='p3B1')],
         [sg.Button('Make Predictions',key='p3B2')],
         [sg.Button('Show Prediction Matrix',key='p3B3')]
-    ])],
+    ])]
 
-    [sg.Button('Generate Report',key='p3B4')]
+
 ]
 
 #The control panel (tab group)
@@ -107,7 +103,7 @@ show removed values (and itemsets, format 1 rules) + reason why removed
 reset
 """
 top=[
-    [sg.Input(key='tI0', visible=False, enable_events=True),sg.FileBrowse('Load',key='tB0',target='tI0'),sg.Button('Show All Removed Values',key='tB1'), sg.Button('Reset',key='tB2')]
+    [sg.Input(key='tI0', visible=False, enable_events=True),sg.FileBrowse('Load',key='tB0',target='tI0')]
 ]
 
 #all tables
@@ -121,14 +117,8 @@ prediction (format 1 rules, prediction matrix, correct prediction calculation)
 right=[
    
    
-    [sg.Col([[sg.Input(visible=False),sg.Input(visible=False)]], key='tds0')],
-    [sg.Frame('Reports',
-        [
-        [sg.Button('Original Data',key='rB0'), sg.Button('Data w/o outliers',key='rB1'), sg.Button('Discretized Data',key='rB2')],
-        [sg.Button('Training Set',key='rB3'),sg.Button('Testing Set',key='rB4')],
-        [sg.Button('Association Report',key='rB5'), sg.Button('Prediction Report',key='rB6')]
-        ],size=(375,120),element_justification='CENTER')
-    ]
+    [sg.Col([[sg.Input(visible=False),sg.Input(visible=False)]], key='tds0')]
+
 ]
 
 #window
@@ -230,12 +220,11 @@ while True:  # Event Loop
     elif event=='p2B7':
         sg.popup_scrolled(dm.generateNamedTable(dataTable),title='Named Discrete Value Table',size=(100,300))
     elif event=='p2B5':
-        r, sr, t=dm.GenerateAssociationRules(cleanSet,float(values['p2I3']),nonRedundantrecords)
+        r, sr, t=dm.GenerateAssociationRules(cleanSet,float(values['p2I3']),dataTable.namedDisTbl,nonRedundantrecords,new_headers)
         #generate rules
     elif event=='p2B8':
-        its=dm.ConvertRecord_to_itemset(new_headers,nonRedundantrecords,dataTable.namedDisTbl)
         #show frq itemsets
-        Fits=dm.Apriori(its)
+        Fits=dm.Apriori(dataTable.namedDisTbl,nonRedundantrecords,new_headers)
         sg.popup_scrolled(dm.generateItemset(Fits),title='Frequent Itemset',size=(100,300))
     elif event=='p2B9':
         cleanSet,txt=dm.cleanFreqItemSet(Fits,nonRedundantrecords)
@@ -254,7 +243,9 @@ while True:  # Event Loop
             format='Format-2'
         srwftxt=dm.generateSurvRules(sr,dataTable.namedDisTbl,format,values['p2I3'],nonRedundantrecords)
         sg.popup_scrolled(srwftxt,title='Survived Rules '+str(format),size=(100,300))
-        
+    elif event=='p3B2':
+        predtxt=dm.predict(sr,values['p3I0'],dataTable.testData,dataTable.namedDisTbl,dataTable.columnHeaders)
+        sg.popup_scrolled(predtxt, title='prediction ', size=(100, 300))
     
         
         

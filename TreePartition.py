@@ -11,15 +11,17 @@ class PartitionNode:
         self.titi=titi
         self.sibling=sibling
         self.root=root
-        self.classFrequencies=[]
+
         if self.data==[]:
             self.values=[]
             self.uniqueClasses=[]
             self.card=len(self.values)
+            self.classFrequencies = []
         else:
-            self.values=data[:][1]
+            self.values=[data[1] for data in self.data]
             self.uniqueClasses=list(set([data[2] for data in self.data]))
             self.card=len([data[1] for data in self.data])
+            self.classFrequencies=[[data[2] for data in self.data].count(value) for value in self.uniqueClasses]
         
         if isRoot==False:
             self.isStopped=self.STOP()
@@ -46,13 +48,7 @@ class PartitionNode:
             if len(self.uniqueClasses)==1:
                 self.color='purple'
                 return True
-            
-            freq=[]
-            for value in self.uniqueClasses:
-                freq.append([data[2] for data in self.data].count(value))
-            self.classFrequencies=freq
-
-            if min(freq)/max(freq) <0.5:
+            if min(self.classFrequencies)/max(self.classFrequencies) <0.5:
                 if len(self.uniqueClasses) < math.floor(n/2) or len(self.uniqueClasses) == math.floor(n/2):
                     self.color='purple'
                     return True
