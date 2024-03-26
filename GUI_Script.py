@@ -102,7 +102,7 @@ show removed values (and itemsets, format 1 rules) + reason why removed
 reset
 """
 top=[
-    [sg.Input(key='tI0', visible=False, enable_events=True),sg.FileBrowse('Load',key='tB0',target='tI0')]
+    [sg.Input(key='tI0', visible=False, enable_events=True),sg.FileBrowse('Load',key='tB0',target='tI0'),sg.Button('Run All',key='rA')]
 ]
 
 #all tables
@@ -135,6 +135,182 @@ while True:  # Event Loop
 
     if event == sg.WIN_CLOSED or event in ('Close', None):
         break
+    elif event == 'rA':
+        while True:
+            try:
+                # identify outliers
+                dm.identifyOutliers(dataTable)
+                # highlight outlier cells
+                out_records = dataTable.outliers
+                aff_rows = []
+                for i in range(len(dataTable.outliers)):
+                    aff_rows.append(dataTable.outliers[i][1])
+                aff_rows = list(set(aff_rows))
+                dataTable.outlierRecords = aff_rows
+                rc = []
+                for row in aff_rows:
+                    rc.append((row, 'Cyan'))
+                window['OG_Table'].update(row_colors=rc)
+            except Exception:
+                continue
+            break
+
+        while True:
+            try:
+                # remove outliers
+                dataTable.dataNoOutliers = [dataTable.OriginalRecords[i] for i in range(len(dataTable.OriginalRecords)) if
+                                            i not in dataTable.outlierRecords]
+                dataTable.currentAttributeValues = util.record_to_values(dataTable.dataNoOutliers)
+                # create outlier table
+                # switch scene to data w/o outlier table
+                window['OG_Table'].update(values=dataTable.dataNoOutliers)
+                # pop out outlier removal report
+                util.generate_Outlier_Report(dataTable)
+                sg.popup_scrolled(dataTable.outlierRemovalReport, title="Outlier Removal Report", size=(100, 125))
+            except Exception:
+                continue
+            break
+
+        while True:
+            try:
+                # discretized values
+                dataTable.currentAttributeValues, dataTable.discretizedRecords = dm.entropy_discretization(dataTable.currentAttributeValues, dataTable)
+                # update table
+                window['OG_Table'].update(values=dataTable.discretizedRecords)
+            except Exception:
+                continue
+            break
+
+        while True:
+            try:
+                # remove dupes
+                dataTable.discretizedNoDups = []
+                dontadd = ['n/a']
+                for i in range(len(dataTable.discretizedRecords)):
+                    if dataTable.discretizedRecords[i] not in dontadd:
+                        if dataTable.discretizedRecords.count(dataTable.discretizedRecords[i]) == 1:
+                            dataTable.discretizedNoDups.append(dataTable.discretizedRecords[i])
+                        else:
+                            dataTable.discretizedNoDups.append(dataTable.discretizedRecords[i])
+                            dontadd.append(dataTable.discretizedRecords[i])
+
+                dataTable.dupedRecords = dontadd[1:]
+                dataTable.currentAttributeValues = util.record_to_values(dataTable.discretizedNoDups)
+                window['OG_Table'].update(values=dataTable.discretizedNoDups)
+                util.generate_Discretization_Report(dataTable)
+                sg.popup_scrolled(dataTable.discretizationText, title="Discretization Duplicate Removal Report",
+                                  size=(100, 125))
+            except Exception:
+                continue
+            break
+
+        while True:
+            try:
+                # train/test Split
+                dataTable.trainData, dataTable.testData = dm.TTSplit(dataTable.discretizedRecords, 0.10)
+                dataTable.currentAttributeValues = util.record_to_values(dataTable.trainData)
+                window['OG_Table'].update(values=dataTable.trainData)
+            except Exception:
+                continue
+            break
+
+        correlation=sg.popup_get_text('Enter Correlation Threshold')
+        if correlation!="":
+            while True:
+                try:
+                    #identify redundancies
+                    dataTable.CorelationMatrix, dataTable.redundantAttr = dm.IdentifyRedundancies(
+                        dataTable.currentAttributeValues[1:], float(correlation))
+                    sg.popup_scrolled(util.generate_Corelation_Matrix_Report(dataTable, float(correlation)),
+                                      title='Correlation Matrix Report', size=(100, 300))
+                except Exception:
+                    continue
+                break
+        else:
+            break
+
+        while True:
+            try:
+                #remove redundancies
+                rmv = dm.removeRedundancies(dataTable.redundantAttr, len(dataTable.columnHeaders) - 1)
+                nonRedundantVal = [dataTable.currentAttributeValues[i] for i in range(len(dataTable.currentAttributeValues)) if
+                                   i not in rmv]
+                nonRedundantrecords = [dataTable.trainData[i] for i in range(len(dataTable.trainData))]
+                print(rmv)
+                for j in nonRedundantrecords:
+                    for i in rmv:
+                        j.pop(i)
+                new_headers = dataTable.columnHeaders
+                for i in rmv:
+                    del new_headers[i]
+                # print(nonRedundantrecords)
+                dataTable.currentAttributeValues = nonRedundantVal
+            except Exception:
+                continue
+            break
+
+        while True:
+            try:
+                # show frq itemsets
+                Fits = dm.Apriori(dataTable.namedDisTbl, nonRedundantrecords, new_headers)
+                sg.popup_scrolled(dm.generateItemset(Fits), title='Frequent Itemset', size=(100, 300))
+            except Exception:
+                continue
+            break
+
+        while True:
+            try:
+                #clean set
+                cleanSet, txt = dm.cleanFreqItemSet(Fits, nonRedundantrecords)
+
+                # clean itemsets
+                sg.popup_scrolled(txt, title='Cleaned Frequent Itemset', size=(100, 300))
+            except Exception:
+                continue
+            break
+
+        confidence=sg.popup_get_text('Enter Confidence Threshold')
+        if confidence != "":
+            while True:
+                try:
+                    # generate rules
+                    r, sr, t = dm.GenerateAssociationRules(cleanSet, float(confidence), dataTable.namedDisTbl,
+                                                           nonRedundantrecords, new_headers)
+                except Exception:
+                    continue
+                break
+        else:
+            break
+        # show rules
+        sg.popup_scrolled(t, title='All Rules', size=(100, 300))
+
+        format=sg.popup_get_text('Enter Format (None, Format-1, Format-2)')
+        if format != "":
+            while True:
+                try:
+                    # show survived rules
+                    srwftxt = dm.generateSurvRules(sr, dataTable.namedDisTbl, format, confidence, nonRedundantrecords)
+                    sg.popup_scrolled(srwftxt, title='Survived Rules ' + str(format), size=(100, 300))
+                except Exception:
+                    continue
+                break
+        else:
+            break
+
+
+        name=sg.popup_get_text('Enter Name of Dependent Variable ')
+        if name != "":
+            while True:
+                try:
+                    #prediction
+                    predtxt = dm.predict(sr, name, dataTable.testData, dataTable.namedDisTbl, dataTable.columnHeaders)
+                    sg.popup_scrolled(predtxt, title='prediction ', size=(100, 300))
+                except Exception:
+                    continue
+                break
+        else:
+            break
+
     elif event=='tI0':
         #create data object
         originalData=util.Generate_Table_From_CSV(values['tB0'])

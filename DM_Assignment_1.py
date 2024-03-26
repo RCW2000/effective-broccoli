@@ -691,10 +691,10 @@ def predict(rules,dependentVariable,testData,nameTable,headers):
     counts = [[0, 0] for i in range(len(unq_val))]
 
     pred_matrix="Unique Values in the |  Predicted Values  | \n"
-    pred_matrix=pred_matrix+"Dependent variable   |"
+    pred_matrix=pred_matrix+"Dependent variable    |_______________________"
     for i in range(len(predValues)):
         pred_matrix+=str(predValues[i])+"         |"
-    pred_matrix+="\n(Descision Attribute)   |             |           |\n"
+    pred_matrix+="\n(Descision Attribute) |             |           |\n"
     pred_matrix+="--------------------------------------------------------------------\n"
     for i in range(len(unq_val)):
         for j in range(i+1,len(unq_val)):
