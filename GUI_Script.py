@@ -18,6 +18,14 @@ p1_tab=[
         [sg.Button('Remove Outliers',key='p1B1')] #removal popup
     ])],
 
+    [sg.Frame('Redundancies', layout=[
+        [sg.Text('Enter Correlation Threshold')],
+        [sg.Input(key='p2I2')],
+        [sg.Button('Identify Redundant Attributes',key='p2B2')],
+        [sg.Button('Show Correlation Matrix',key='p2B3')],
+        [sg.Button('Remove Highly Correlated Attributes',key='p2B4')]#removal value
+    ])],
+
     [sg.Frame('Discretization', layout=[
         [sg.Button('Run (Entropy-Based)',key='p1B3')],
         [sg.Button('Remove Duplicate Data',key='p1B2')],
@@ -46,14 +54,7 @@ p2_tab=[
         [sg.Button('Download Data',key='p2B1')]
     ])],
 
-    [sg.Frame('Redundancies', layout=[
-        [sg.Text(key='p2T0')],#train set filename
-        [sg.Text('Enter Correlation Threshold')],
-        [sg.Input(key='p2I2')],
-        [sg.Button('Identify Redundancies',key='p2B2')],
-        [sg.Button('Show Correlation Matrix',key='p2B3')],
-        [sg.Button('Remove Highly Correlated Attributes',key='p2B4')]#removal value
-    ])],
+
 
     [sg.Frame('Associations', layout=[
         [sg.Button('Show Identified Frequent Itemsets',key='p2B8')],
@@ -177,7 +178,8 @@ while True:  # Event Loop
                 dataTable.currentAttributeValues, dataTable.discretizedRecords = dm.entropy_discretization(dataTable.currentAttributeValues, dataTable)
                 # update table
                 window['OG_Table'].update(values=dataTable.discretizedRecords)
-            except Exception:
+            except Exception as e:
+                print(e.with_traceback())
                 continue
             break
 
@@ -379,17 +381,24 @@ while True:  # Event Loop
     elif event=='p2B4':
         rmv=dm.removeRedundancies(dataTable.redundantAttr,len(dataTable.columnHeaders)-1)
         nonRedundantVal=[dataTable.currentAttributeValues[i] for i in range(len(dataTable.currentAttributeValues)) if i not in rmv]
-        nonRedundantrecords=[dataTable.trainData[i] for i in range(len(dataTable.trainData))]
+        nonRedundantrecords=[dataTable.currentRecords[i] for i in range(len(dataTable.currentRecords))]
+
         print(rmv)
         for j in nonRedundantrecords:
             for i in rmv:
                 j.pop(i)
+        print(nonRedundantrecords[0])
         new_headers=dataTable.columnHeaders
         for i in rmv:
             del new_headers[i]
+        print(new_headers)
         #print(nonRedundantrecords)
         dataTable.currentAttributeValues=nonRedundantVal
-        sg.popup_scrolled(util.textTable(nonRedundantrecords,new_headers),title='Data Table',size=(100,100))
+        dataTable.currentRecords=nonRedundantrecords
+        display_Records = util.display_Records(dataTable, rmv)
+        window['OG_Table'].Widget.configure(displaycolumns=new_headers)
+        window['OG_Table'].update(values=display_Records)
+        #sg.popup_scrolled(util.textTable(nonRedundantrecords,new_headers),title='Data Table',size=(100,100))
     elif event=='p2B6':
         sg.popup_scrolled(dm.generateUnNamedTable(dataTable),title='Unnamed Discrete Value Table',size=(100,300))
     elif event=='p2B7':

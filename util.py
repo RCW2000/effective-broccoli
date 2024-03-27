@@ -7,6 +7,7 @@ class DataTable:
     def __init__(self, originalData:list):
         self.columnHeaders=originalData[0]
         self.OriginalRecords=originalData[1]
+        self.currentRecords=self.OriginalRecords
         self.OriginalAttributeValues=originalData[2]
         self.OriginalTable=originalData[3]
         self.currentAttributeValues=self.OriginalAttributeValues
@@ -28,6 +29,7 @@ class DataTable:
         self.partitions=None
         self.namedDisTbl=None
         self.unNamedDistTbl=None
+        self.currentHeaders=None
 
 
 def Generate_Table_From_CSV(filepath):
@@ -117,19 +119,18 @@ def generate_Corelation_Matrix_Report(dataTable:DataTable,threshold):
     
 
 
-def tagSort(data:list):
-    tags=[i for i in range(len(data))]
+def nottagSort(dataList:list):
+    data=dataList.copy()
     for i in range(len(data)):
         for j in range(i+1,len(data)):
             if data[i] > data[j]:
-                tags[i], tags[j] = tags[j], tags[i]
-    return tags
+                temp = data[i]
+                data[i] = data[j]
+                data[j] = temp
+    return data
 
 def ascData(data:list):
-    genTags=tagSort(data)
-    sorted_Data=[]
-    for tag in genTags:
-        sorted_Data.append(data[tag])
+    sorted_Data=nottagSort(data)
     return sorted_Data
 
 def median(data:list):
@@ -137,15 +138,20 @@ def median(data:list):
     Ordered_Data=ascData(data)
     #find median
     if len(Ordered_Data)%2!=0:
-        medianInd=math.ceil(len(Ordered_Data)/2)
-        return float(Ordered_Data[medianInd-1])
+        medianInd=len(Ordered_Data)//2
+        print(str(medianInd)+"here")
+        print(Ordered_Data)
+        print(len(Ordered_Data))
+        return float(Ordered_Data[medianInd])
     else:
-        medianInd_1=math.floor(len(Ordered_Data)/2)
-        medianInd_2=math.ceil(len(Ordered_Data)/2)
-        #print(medianInd_1)
-        #print(medianInd_2)
-        #print(len(Ordered_Data))
-        return (float(Ordered_Data[medianInd_1-1])+float(Ordered_Data[medianInd_2-1]))/2
+        half=int(len(Ordered_Data)/2)
+        medianInd_1=half-1
+        medianInd_2=-half
+        print(str(medianInd_1)+"here 2")
+        print(medianInd_2)
+        print(Ordered_Data)
+        print(len(Ordered_Data))
+        return (float(Ordered_Data[medianInd_1])+float(Ordered_Data[medianInd_2]))/2
     
 def record_to_values(record:list):
     attributeValues=[]
@@ -159,22 +165,14 @@ def record_to_values(record:list):
 def values_to_records(values:list):
     records=[]
     inc=0
-    classes=values[0]
-    records=[[classes[i]] for i in range(len(classes))]
-    for i in range(len(records)):
-        for j in range(1,len(values)):
-              records[i]=records[i]+[values[j][inc][1]]
+    for i in range(len(values[0])):
+        record_helper=[]
+        for j in range(len(values)):
+            record_helper.append(values[j][inc])
+        records.append(record_helper)
         inc=inc+1
     #print(records)
     return records
-
-def partitionMed(partitionCol:list):
-    av=[partitionCol[i][1] for i in range(len(partitionCol))]
-    return median(av)
-
-def partitionMean(partitionCol:list):
-    av=[partitionCol[i][1] for i in range(len(partitionCol))]
-    return mean(av)
 
 def orderRecords(records):
     return records[0]
@@ -186,13 +184,6 @@ def DownloadData(Data, headers, filepath):
         writer.writerows(Data)
     print('FIle Saved')
 
-def textTable(data:list,headers:list):
-    tabletxt=""
-    for i in range(len(headers)):
-        tabletxt=tabletxt+str(headers[i])+" "
-    for i in range(len(data)):
-        tabletxt=tabletxt+"\n"+str(data[i])
-    return tabletxt
 
 def support(Freq,data:list):
     return Freq/len(data)
@@ -238,7 +229,12 @@ def nameToRange(nameTable,name):
         if len(set(name).intersection(set(nameTable[i])))>0:
             return nameTable[i][3]
         
-#def massNameToValue(namedTable, names):
-    #values=[]
-    #for i in range(len(names)):
+def display_Records(dataTable:DataTable,rmv_Ind):
+    #add filler colums of data
+    da=dataTable.currentAttributeValues.copy()
+    for i in range(len(dataTable.columnHeaders)+len(rmv_Ind)):
+        if i in rmv_Ind:
+            da.insert(i,['null' for i in range(len(da[0]))])
+    return values_to_records(da)
+
     

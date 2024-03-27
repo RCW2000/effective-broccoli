@@ -2,7 +2,7 @@ import math
 import util
 #partition via tree
 class PartitionNode:
-    def __init__(self,data:list,isRoot:bool,parent=None, grandparent=None, titi=None, sibling=None,root=None,funct=None):
+    def __init__(self,data:list,isRoot:bool,parent=None, grandparent=None, titi=None, sibling=None,root=None):
         self.data=data
         self.color='blue'
         self.isRoot=isRoot
@@ -11,7 +11,7 @@ class PartitionNode:
         self.titi=titi
         self.sibling=sibling
         self.root=root
-        self.funct=funct
+
 
 
         self.values=[data[1] for data in self.data]
@@ -23,14 +23,16 @@ class PartitionNode:
             self.isStopped=self.STOP()
             self.entropy=self.Entropy()
             self.infogain=None
+        else:
+            self.isStopped =False
         
         
         
     
     def splitNode(self,threshold,root):
         #partition
-        left=PartitionNode([self.data[i] for i in range(len(self.data)) if self.data[i][1] < threshold ],False,self,self.parent,self.sibling,root=root,funct=self.funct)
-        right=PartitionNode([self.data[i] for i in range(len(self.data)) if self.data[i][1] > threshold or self.data[i][1] == threshold],False,self,self.parent,self.sibling,left,root=root,funct=self.funct)
+        left=PartitionNode([self.data[i] for i in range(len(self.data)) if self.data[i][1] < threshold ],False,self,self.parent,self.sibling,root=root)
+        right=PartitionNode([self.data[i] for i in range(len(self.data)) if self.data[i][1] > threshold or self.data[i][1] == threshold],False,self,self.parent,self.sibling,left,root=root)
         left.sibling=right
         self.color='orange'
         left.color='blue'
@@ -40,7 +42,7 @@ class PartitionNode:
     def STOP(self)->bool:
         #stop condition
         if self.data!=[]:
-            n=len(list(set(self.root.data[:][1])))
+            n=len(list(set([data[1] for data in self.root.data])))
             if len(self.uniqueClasses)==1:#should stop bad median partitian
                 self.color='purple'
                 return True
@@ -49,7 +51,14 @@ class PartitionNode:
                     self.color='purple'
                     return True
             #add condition to stop if bad mean partition
-            if self.funct==util.mean and len(list(set(self.values)))==1:
+            mean=util.mean(self.values)
+            if len([value for value in self.values if value < mean]) == 0 or len([value for value in self.values if value < mean])==len(self.values):
+                self.color='purple'
+                return True
+            median=util.median(self.values)
+            # add condition to stop if bad median partition
+            if len([value for value in self.values if value < median]) == 0 or len([value for value in self.values if value < median])==len(self.values):
+                self.color='purple'
                 return True
             return False
     
@@ -59,6 +68,7 @@ class PartitionNode:
         for i in range(len(self.uniqueClasses)):
            sum=sum + (-1*(self.classFrequencies[i])*math.log2(self.classFrequencies[i]))
         return sum
+
 
 class PartitionTree:
     def __init__(self,data:list):
@@ -83,7 +93,7 @@ class PartitionTree:
 
 
     def Partition(self,function):
-        self.root.funct=function
+
         #dfs
         closed=set()
         fringe=[]
@@ -94,7 +104,7 @@ class PartitionTree:
                 return self.medfinPartitions,partitions
             node: PartitionNode
             node,partitions=fringe.pop(0)
-            if node.color=='purple':
+            if node.isStopped==True:
                 node.infogain=(((node.card/node.parent.card)*node.entropy) + ((node.sibling.card/node.parent.card)*node.sibling.entropy))
                 if function==util.median:
                     self.medfinPartitions.append(node)
