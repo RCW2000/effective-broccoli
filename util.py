@@ -232,6 +232,8 @@ def nameToRange(nameTable,name):
 def display_Records(dataTable:DataTable,rmv_Ind):
     #add filler colums of data
     da=dataTable.currentAttributeValues.copy()
+    if rmv_Ind==None:
+        return values_to_records(da)
     for i in range(len(dataTable.columnHeaders)+len(rmv_Ind)):
         if i in rmv_Ind:
             da.insert(i,['null' for i in range(len(da[0]))])

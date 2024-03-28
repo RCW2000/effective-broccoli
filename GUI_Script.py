@@ -357,47 +357,48 @@ while True:  # Event Loop
 
         dataTable.dupedRecords=dontadd[1:]
         dataTable.currentAttributeValues=util.record_to_values(dataTable.discretizedNoDups)
-        window['OG_Table'].update(values=dataTable.discretizedNoDups)
+        dataTable.currentRecords=dataTable.discretizedNoDups
+        display_Records = util.display_Records(dataTable, rmv)
+        window['OG_Table'].update(values=display_Records)
         util.generate_Discretization_Report(dataTable)
         sg.popup_scrolled(dataTable.discretizationText,title="Discretization Duplicate Removal Report",size=(100,125))
     elif event=='p1B3':
         #discretized values
         dataTable.currentAttributeValues,dataTable.discretizedRecords=dm.entropy_discretization(dataTable.currentAttributeValues,dataTable)
         #update table
-        window['OG_Table'].update(values=dataTable.discretizedRecords)
+        dataTable.currentRecords=dataTable.discretizedRecords
+        display_Records = util.display_Records(dataTable, rmv)
+        window['OG_Table'].update(values=display_Records)
     elif event=='p2B0':
         #train/test Split
-       dataTable.trainData,dataTable.testData=dm.TTSplit(dataTable.discretizedRecords,0.10)
+       dataTable.trainData,dataTable.testData=dm.TTSplit(dataTable.currentRecords,0.10)
        dataTable.currentAttributeValues=util.record_to_values(dataTable.trainData)
-       window['OG_Table'].update(values=dataTable.trainData)
+       display_Records=util.display_Records(dataTable,rmv)
+       window['OG_Table'].update(display_Records)
     elif event=='p2B1':
        util.DownloadData(dataTable.trainData,dataTable.columnHeaders,values['p2I0'])     
        util.DownloadData(dataTable.testData,dataTable.columnHeaders,values['p2I1'])  
     elif event=='p2B2':
         dataTable.CorelationMatrix,dataTable.redundantAttr=dm.IdentifyRedundancies(dataTable.currentAttributeValues[1:],float(values['p2I2']))
-        sg.popup_scrolled(util.generate_Corelation_Matrix_Report(dataTable,float(values['p2I2'])), title='Correlation Matrix Report',size=(100,300))
+        cm=util.generate_Corelation_Matrix_Report(dataTable,float(values['p2I2']))
+        sg.popup_scrolled(cm, title='Correlation Matrix Report',size=(100,300))
     elif event=='p2B3':
-        sg.popup_scrolled(util.generate_Corelation_Matrix_Report(dataTable,float(values['p2I2'])), title='Correlation Matrix Report',size=(100,300))
+        sg.popup_scrolled(cm, title='Correlation Matrix Report',size=(100,300))
     elif event=='p2B4':
-        rmv=dm.removeRedundancies(dataTable.redundantAttr,len(dataTable.columnHeaders)-1)
-        nonRedundantVal=[dataTable.currentAttributeValues[i] for i in range(len(dataTable.currentAttributeValues)) if i not in rmv]
-        nonRedundantrecords=[dataTable.currentRecords[i] for i in range(len(dataTable.currentRecords))]
-
-        print(rmv)
-        for j in nonRedundantrecords:
-            for i in rmv:
-                j.pop(i)
-        print(nonRedundantrecords[0])
-        new_headers=dataTable.columnHeaders
-        for i in rmv:
-            del new_headers[i]
-        print(new_headers)
-        #print(nonRedundantrecords)
-        dataTable.currentAttributeValues=nonRedundantVal
-        dataTable.currentRecords=nonRedundantrecords
-        display_Records = util.display_Records(dataTable, rmv)
-        window['OG_Table'].Widget.configure(displaycolumns=new_headers)
-        window['OG_Table'].update(values=display_Records)
+        rmv=dm.removeRedundancies(dataTable.redundantAttr)
+        if rmv !=None:
+            nonRedundantVal=[dataTable.currentAttributeValues[i] for i in range(len(dataTable.currentAttributeValues)) if i not in rmv]
+            nonRedundantrecords=util.values_to_records(nonRedundantVal)
+            new_headers=dataTable.columnHeaders.copy()
+            new_headers=[new_headers[i] for i in range(len(new_headers)) if i not in rmv]
+            dataTable.currentHeaders=new_headers
+            print(new_headers)
+            #print(nonRedundantrecords)
+            dataTable.currentAttributeValues=nonRedundantVal
+            dataTable.currentRecords=nonRedundantrecords
+            display_Records = util.display_Records(dataTable, rmv)
+            window['OG_Table'].Widget.configure(displaycolumns=new_headers)
+            window['OG_Table'].update(values=display_Records)
         #sg.popup_scrolled(util.textTable(nonRedundantrecords,new_headers),title='Data Table',size=(100,100))
     elif event=='p2B6':
         sg.popup_scrolled(dm.generateUnNamedTable(dataTable),title='Unnamed Discrete Value Table',size=(100,300))
@@ -408,7 +409,7 @@ while True:  # Event Loop
         #generate rules
     elif event=='p2B8':
         #show frq itemsets
-        Fits=dm.Apriori(dataTable.namedDisTbl,nonRedundantrecords,new_headers)
+        Fits=dm.Apriori(dataTable.namedDisTbl,dataTable.currentRecords,dataTable.currentHeaders)
         sg.popup_scrolled(dm.generateItemset(Fits),title='Frequent Itemset',size=(100,300))
     elif event=='p2B9':
         cleanSet,txt=dm.cleanFreqItemSet(Fits,nonRedundantrecords)

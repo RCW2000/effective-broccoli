@@ -108,7 +108,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
         if i==0:
             discretizedCols.append(classValues)
         else: 
-            discretizedCols.append(CollapsePartitions[i-1])
+            discretizedCols.append([data[1] for data in CollapsePartitions[i-1]])
 
     
     
@@ -161,25 +161,55 @@ def  IdentifyRedundancies(data,threshold):
 
     return correlationMatrix, highlyCorrelated
 
-def removeRedundancies(redundantArr:list, num_attr):
+def removeRedundancies(redundantArr:list):
+    if len(redundantArr)==0:
+        return None
+    print(redundantArr)
     #sort by count
     remaining=redundantArr.copy()
     rmvInd=[]
-    unOrdered=[]
-    for i in range(len(redundantArr)):
+    flat=[]
+    for i in range(len(remaining)):
         for j in range(2):
-            unOrdered.append(redundantArr[i][j])
+            flat.append(remaining[i][j])
     counts=[]
-    for i in range(num_attr):
-        counts.append(unOrdered.count(i))
-    k=0
-    while k<len(remaining):
-        for i in range(len(remaining)):
-            if counts.index(max(counts)) in remaining[i]:
-                remaining[i]=='skip'
-                k=k+1
-        rmvInd.append(counts.index(max(counts)))
-        counts[counts.index(max(counts))]=0
+    
+    for i in range(max(list(set(flat)))+2):
+        if i-1 in list(set(flat)):
+            counts.append(flat.count(i-1))
+        else:
+            counts.append(0)
+    
+    #print(counts)
+    rmvInd=[]
+    while len(remaining)>0:
+        #find and remove all refs to max count
+        maximum=max(counts)
+        max_ind=counts.index(maximum)#ref to remove
+        if len(redundantArr)==1:
+            v=max_ind-1
+        else:
+            v=max_ind
+        counts[max_ind]=0
+        if v in flat:
+            rmvInd.append(max_ind)
+            remaining=[pair for pair in remaining if v not in pair]
+            #recount
+            if len(remaining)>0:
+                flat=[]
+                for i in range(len(remaining)):
+                    for j in range(2):
+                        flat.append(remaining[i][j])  
+
+                counts=[]
+                if len(flat)>0:
+                    for i in range(max(list(set(flat)))+1):
+                        if i in list(set(flat)):
+                            counts.append(flat.count(i))
+                        else:
+                            counts.append(0)             
+                #loop again
+        print(rmvInd)
     return rmvInd
 
 
