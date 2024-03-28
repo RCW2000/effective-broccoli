@@ -356,7 +356,7 @@ while True:  # Event Loop
                     dontadd.append(dataTable.discretizedRecords[i])
 
         dataTable.dupedRecords=dontadd[1:]
-        dataTable.currentAttributeValues=util.record_to_values(dataTable.discretizedNoDups)
+        dataTable.currentAttributeValues=util.record_to_valuesI(dataTable.discretizedNoDups)
         dataTable.currentRecords=dataTable.discretizedNoDups
         display_Records = util.display_Records(dataTable, rmv)
         window['OG_Table'].update(values=display_Records)
@@ -372,7 +372,7 @@ while True:  # Event Loop
     elif event=='p2B0':
         #train/test Split
        dataTable.trainData,dataTable.testData=dm.TTSplit(dataTable.currentRecords,0.10)
-       dataTable.currentAttributeValues=util.record_to_values(dataTable.trainData)
+       dataTable.currentAttributeValues=util.record_to_valuesI(dataTable.trainData)
        display_Records=util.display_Records(dataTable,rmv)
        window['OG_Table'].update(display_Records)
     elif event=='p2B1':
@@ -412,7 +412,7 @@ while True:  # Event Loop
         Fits=dm.Apriori(dataTable.namedDisTbl,dataTable.currentRecords,dataTable.currentHeaders)
         sg.popup_scrolled(dm.generateItemset(Fits),title='Frequent Itemset',size=(100,300))
     elif event=='p2B9':
-        cleanSet,txt=dm.cleanFreqItemSet(Fits,nonRedundantrecords)
+        cleanSet,txt=dm.cleanFreqItemSet(Fits,dataTable.currentRecords)
         #clean itemsets
         sg.popup_scrolled(txt,title='Cleaned Frequent Itemset',size=(100,300))
     elif event=='p2B10':

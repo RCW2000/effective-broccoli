@@ -116,8 +116,8 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
 def setVal(inc):
     return inc
 def TTSplit(records:list, percent):
-    data0=[records[i] for i in range(len(records)) if records[i][0]==0.0] 
-    data1=[records[i] for i in range(len(records)) if records[i][0]==1.0] 
+    data0=[records[i] for i in range(len(records)) if records[i][0]==0] 
+    data1=[records[i] for i in range(len(records)) if records[i][0]==1] 
     data0num=int(len(data0)*percent)
     data1num=int(len(data1)*percent)
     testData=random.sample(data0,data0num)+random.sample(data1,data1num)
@@ -269,10 +269,11 @@ def Apriori(namedTable, records, headers,threshold=2):
             #create c
             c=[tup[0] for tup in Lset[-1]]
             #concat c
-            concat_c=[]
-            for i in range(len(c)-1):
-                for j in range(i+inc,len(c)):
-                    concat_c.append(c[i]+c[j])
+            concat_c = []
+            for i in range(len(c)):
+                for j in range(i + 1, len(c)):
+                    if j>i:
+                        concat_c.append(c[i] +c[j])
             #create l
             counts=[]
 
@@ -283,6 +284,8 @@ def Apriori(namedTable, records, headers,threshold=2):
                     for j in range(len(concat_c[i])):
                         if concat_c[i][j] not in record:
                             flag = False
+                        else:
+                            flag=True
                     if flag==True:
                         count=count+1
                 counts.append(count)
@@ -295,12 +298,11 @@ def Apriori(namedTable, records, headers,threshold=2):
             c = [tup[0] for tup in Lset[-1]]
             # concat c
             concat_c = []
-            for i in range(len(c) - 1):
-                if i+inc < len(c):
-                    for j in range(i + inc, len(c)):
+            for i in range(len(c)):
+                for j in range(i + 1, len(c)):
+                    if j>i:
                         concat_c.append(c[i] +[c[j][0]])
-                else:
-                    return c
+               
             # create l
             counts = []
 

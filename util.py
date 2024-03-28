@@ -162,6 +162,15 @@ def record_to_values(record:list):
         attributeValues.append(helperArr)
     return attributeValues
 
+def record_to_valuesI(record:list):
+    attributeValues=[]
+    for j in range(len( record[0])):
+        helperArr=[]
+        for i in range(len(record)):
+            helperArr.append(int(record[i][j]))
+        attributeValues.append(helperArr)
+    return attributeValues
+
 def values_to_records(values:list):
     records=[]
     inc=0
