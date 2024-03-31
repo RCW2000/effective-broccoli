@@ -405,7 +405,7 @@ while True:  # Event Loop
     elif event=='p2B7':
         sg.popup_scrolled(dm.generateNamedTable(dataTable),title='Named Discrete Value Table',size=(100,300))
     elif event=='p2B5':
-        r, sr, t=dm.GenerateAssociationRules(cleanSet,float(values['p2I3']),dataTable.namedDisTbl,nonRedundantrecords,new_headers)
+        r, sr, t=dm.GenerateAssociationRules(cleanSet,float(values['p2I3']),dataTable.namedDisTbl,dataTable.currentRecords,dataTable.currentHeaders)
         #generate rules
     elif event=='p2B8':
         #show frq itemsets
@@ -426,7 +426,7 @@ while True:  # Event Loop
             format='Format-1'
         elif values['p2R2']==True:
             format='Format-2'
-        srwftxt=dm.generateSurvRules(sr,dataTable.namedDisTbl,format,values['p2I3'],nonRedundantrecords)
+        srwftxt=dm.generateSurvRules(sr,dataTable.namedDisTbl,format,values['p2I3'],dataTable.currentRecords)
         sg.popup_scrolled(srwftxt,title='Survived Rules '+str(format),size=(100,300))
     elif event=='p3B2':
         predtxt=dm.predict(sr,values['p3I0'],dataTable.testData,dataTable.namedDisTbl,dataTable.columnHeaders)

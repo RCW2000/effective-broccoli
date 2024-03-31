@@ -3,7 +3,7 @@ import util
 import math
 import random
 import TreePartition as pt
-from itertools import combinations, permutations
+import gc
 def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight rows to be romoved on figure
     attributeValues=dataTable.currentAttributeValues
     std_devs=[]
@@ -262,9 +262,9 @@ def Apriori(namedTable, records, headers,threshold=2):
     flat_records = list(chain.from_iterable(records))
     L1=[([c1[i]],flat_records.count(c1[i])) for i in range(len(c1)) if flat_records.count(c1[i])>threshold or flat_records.count(c1[i])==threshold]
     Lset.append(L1)
-    inc=0
+    inc=1
     while True:
-        inc=inc+1
+        
         if len(Lset)==1:
             #create c
             c=[tup[0] for tup in Lset[-1]]
@@ -279,13 +279,12 @@ def Apriori(namedTable, records, headers,threshold=2):
 
             for i in range(len(concat_c)):
                 count=0
-                flag = True
+                
                 for record in records:
+                    flag = True
                     for j in range(len(concat_c[i])):
                         if concat_c[i][j] not in record:
                             flag = False
-                        else:
-                            flag=True
                     if flag==True:
                         count=count+1
                 counts.append(count)
@@ -294,40 +293,57 @@ def Apriori(namedTable, records, headers,threshold=2):
             Lset.append(l)
             #if empty stop
         else:
-            # create c
+            #create blocks
             c = [tup[0] for tup in Lset[-1]]
-            # concat c
-            concat_c = []
-            for i in range(len(c)):
-                for j in range(i + 1, len(c)):
-                    if j>i:
-                        concat_c.append(c[i] +[c[j][0]])
-               
-            # create l
-            counts = []
+            neighbor_tuples=[]#group like tuples together
+            neighbor_helper=[]
+            resident_arr=[]
+            resident_helper=[]
+            for i in range(1,len(c)):
+                if c[i][:inc] == c[i-1][:inc]:
+                    neighbor_helper.append(c[i-1][:inc+1])
+                    resident_helper.append(c[i-1][-1])
+                else:
+                    neighbor_helper.append(c[i-1][:inc+1])
+                    resident_helper.append(c[i-1][-1])
+                    resident_arr.append(resident_helper)
+                    neighbor_tuples.append([neighbor_helper,resident_arr])
+                    neighbor_helper=[]
+                    resident_arr=[]
+                    resident_helper=[]
+            
+            
+            concat_c=[]
+            for block in neighbor_tuples:
+                for i in range(len(block[0])-1):
+                    for j in range(i+1,len(block[1][0])):
+                        concat_c.append(block[0][i]+[block[1][0][j]])
 
+            #count
+            counts=[]
             for i in range(len(concat_c)):
-                count = 0
-                flag = True
+                count=0
                 for record in records:
+                    flag = True
                     for j in range(len(concat_c[i])):
                         if concat_c[i][j] not in record:
                             flag = False
-                        else:
-                            flag=True
-                    if flag == True:
-                        count = count + 1
+                    if flag==True:
+                        count=count+1
                 counts.append(count)
-            l = [(concat_c[i], counts[i]) for i in range(len(concat_c)) if
-                 counts[i] > threshold or counts[i] == threshold]
-            # add l if not empty
-            if len(l)>0:
-                Lset.append(l)
-            # if empty stop
+            l=[(concat_c[i],counts[i]) for i in range(len(concat_c)) if counts[i] > threshold or counts[i] == threshold]
+            if len(l)==0:
+                return [tup[0] for tup in Lset[-1]]
             else:
-                break
+                Lset.append(l)
+                inc=inc+1
+                #if len(Lset)==2:
+                    #del Lset[0]
+                    #gc.collect()
+            #if empty stop
 
-    return [tup[0] for tup in Lset[-1]]
+
+    
 
 def cleanFreqItemSet(FItemSet,namedTable):
     txt='Removed Itemsets\n'
@@ -392,17 +408,17 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
             if len(rules[i][0])>1:
                 for j in range(len(rules[i][0])):
                     if j==len(rules[i][0])-1:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,[i][0][j]))+" => "
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,rules[i][0][j]))+" => "
                     else:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,[i][0][j]))+" ^ "
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,rules[i][0][j]))+" ^ "
             else:
                 F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0]))+"="+str(util.nameToValue(namedTable,rules[i][0]))+" => "
             if len(rules[i][1])>1:
                 for j in range(len(rules[i][1])):
                     if j==len(rules[i][0])-1:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,[i][1][j]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,rules[i][1][j]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
                     else:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,[i][1][j]))+" ^ "
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,rules[i][1][j]))+" ^ "
             else:
                 F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1]))+"="+str(util.nameToValue(namedTable,rules[i][1]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
         return F1txt
@@ -411,17 +427,17 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
             if len(rules[i][0])>1:
                 for j in range(len(rules[i][0])):
                     if j==len(rules[i][0])-1:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,[i][0][j]))+"]"+" => "
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,rules[i][0][j]))+"]"+" => "
                     else:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,[i][0][j]))+"]" + " ^ "
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,rules[i][0][j]))+"]" + " ^ "
             else:
                 F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0]))+"["+str(util.nameToRange(namedTable,rules[i][0]))+"]"+ " => "
             if len(rules[i][1])>1:
                 for j in range(len(rules[i][1])):
                     if j==len(rules[i][0])-1:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,[i][1][j]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,rules[i][1][j]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
                     else:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,[i][1][j]))+"]"+" ^ "
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,rules[i][1][j]))+"]"+" ^ "
             else:
                 F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1]))+"["+str(util.nameToRange(namedTable,rules[i][1]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
         return F2txt

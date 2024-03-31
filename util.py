@@ -29,7 +29,7 @@ class DataTable:
         self.partitions=None
         self.namedDisTbl=None
         self.unNamedDistTbl=None
-        self.currentHeaders=None
+        self.currentHeaders=self.columnHeaders
 
 
 def Generate_Table_From_CSV(filepath):
@@ -185,6 +185,10 @@ def values_to_records(values:list):
 
 def orderRecords(records):
     return records[0]
+
+def orderItemSets(its):
+    its.replace('I',"")
+    return int(its)
 
 def DownloadData(Data, headers, filepath):
     with open(filepath,'w') as csvfile:
