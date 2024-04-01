@@ -3,7 +3,7 @@ import util
 import math
 import random
 import TreePartition as pt
-from itertools import combinations, permutations
+import gc
 def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight rows to be romoved on figure
     attributeValues=dataTable.currentAttributeValues
     std_devs=[]
@@ -24,44 +24,6 @@ def identifyOutliers(dataTable:util.DataTable):#identify outliers and Highlight 
                 outliers.append([i,j])
     dataTable.outliers=outliers
 
-def findMedians(dataTable:util.DataTable):
-    attributeValues=dataTable.currentAttributeValues
-    medians=[]
-    for col in range(len(attributeValues)):
-        print(len(attributeValues[0]))
-        median=util.median(attributeValues[col])
-        medians.append(median)
-    return medians
-
-def entropy(s:list):
-    #print(s)
-    s_av=[s[i][1] for i in range(len(s))]
-    s_classes=[s[i][2] for i in range(len(s))]
-    m,pi,_=set_class_info(s_av,s_classes)
-    #pi=freq of each class
-    sum=0
-    for i in range (0,m):
-        sum=sum-(pi[i] * math.log(pi[i],2))
-    return sum
-
-
-def info_gain(s_num, s1, s2):
-    #s_num=cardinality of S
-    ent_s1=entropy(s1)
-    ent_s2=entropy(s2)
-    s1_num=len(s1)
-    s2_num=len(s2)
-    
-    s1_part=(s1_num/s_num)*ent_s1
-    s2_part=(s2_num/s_num)*ent_s2
-
-    return s1_part+s2_part
-    
-def set_class_info(s:list,classValues:list):
-    unique_classValues=list(set(classValues))
-    m=len(unique_classValues)
-    pi=[(classValues.count(unique_classValues[i])/len(classValues)) for i in range(m)]
-    return m,pi,unique_classValues
 
 def createPartionColumn(attributeCol:list,classValues:list):
     PartitionColumn=[]
@@ -70,231 +32,17 @@ def createPartionColumn(attributeCol:list,classValues:list):
         PartitionColumn.append([val_ind,attributeCol[val_ind],classValues[val_ind]])
     return PartitionColumn
 
-def isStopCondition(partitionCol:list,OriginalValues):
-    av=[partitionCol[i][1] for i in range(len(partitionCol))]
-    classes=[partitionCol[i][2] for i in range(len(partitionCol))]
-    m,pi,_=set_class_info(av,classes)
-    #print(pi)
-    if m<2:
-        return True
-    if min(pi)/max(pi) <0.5:
-        return True
-    if m < math.floor(len(list(set(OriginalValues)))/2) or m==math.floor(len(list(set(OriginalValues)))/2):
-        return True
-    if len(list(set(av)))==1:
-        return True
-    
-    return False
-
-def Partition(partitionCol:list,OriginalValues,Partfunction):
-    #create table to hold partioned sets where each r/c = A11A21 etc
-    partition_table=[[0 for i in range(2)] for i in range(len(partitionCol))]
-    print('created table: '+str(len(partition_table)))
-    #patrition set until stop adding each to table
-    i=0
-    j=0
-    finPartitions=[]
-    while i < len(partition_table):
-        j=0
-        while j <2:
-            if i==0:
-                k=1
-                partition_table[i][0]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]<Partfunction(partitionCol)]#A1
-                partition_table[i][1]=[partitionCol[i] for i in range(len(partitionCol)) if partitionCol[i][1]>Partfunction(partitionCol) or partitionCol[i][1]==Partfunction(partitionCol)]#A2
-                #print(partition_table[i][1][0][1])
-                #print('partition added')
-                if partition_table[i][0]==[]:
-                    partition_table[i][0]=False
-                if partition_table[i][1]==[]:
-                    partition_table[i][1]=False
-                #add to fin part
-                if partition_table[i][0]==[] or partition_table[i][1]==[]:
-                    finPartitions.append([partitionCol,'No Split'])
-                    partition_table[i][0]=False
-                    partition_table[i][1]=False
-                elif (partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True) and (partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True):
-                    finPartitions.append([partition_table[i][0],info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])])
-                    finPartitions.append([partition_table[i][1],'Duplicate'])
-                    partition_table[i][0]=False
-                    partition_table[i][1]=False
-                elif partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True:
-                    finPartitions.append([partition_table[i][0],info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])])
-                    partition_table[i][0]=False
-                elif partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True:
-                    finPartitions.append([partition_table[i][1],info_gain(len(partitionCol),partition_table[i][0],partition_table[i][1])])
-                    partition_table[i][1]=False
-                j=j+2 
-            elif i==1:
-                if  partition_table[i-1][0]!=False:
-                    partition_table[i][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]<Partfunction(partition_table[i-1][0])]
-                    if partition_table[i][0]==[]:
-                        partition_table[i][0]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][0]=[partition_table[i-1][0][g] for g in range(len(partition_table[i-1][0])) if partition_table[i-1][0][g][1]>Partfunction(partition_table[i-1][0]) or partition_table[i-1][0][g][1]==Partfunction(partition_table[i-1][0])]
-                        if partition_table[i+1][0]==[]:
-                            partition_table[i+1][0]=False
-                    if partition_table[i][0]==[] or partition_table[i+1][0]==[]:
-                        finPartitions.append([partition_table[i-1][0],info_gain(len(partitionCol),partition_table[i-1][0],partition_table[i-1][1])])
-                        partition_table[i-1][0]=False
-                        partition_table[i][0]=False
-                        partition_table[i+1][0]=False
-                    elif (partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True) and (partition_table[i+1][0]!=False and isStopCondition(partition_table[i+1][0],OriginalValues)==True):
-                        finPartitions.append([partition_table[i][0],info_gain(len(partition_table[i-1][0]),partition_table[i][0],partition_table[i+1][0])])
-                        finPartitions.append([partition_table[i+1][0],'Duplicate'])
-                        partition_table[i][0]=False
-                        partition_table[i+1][0]=False
-                    elif partition_table[i][0]!=False and isStopCondition(partition_table[i][0],OriginalValues)==True:
-                        finPartitions.append([partition_table[i][0],info_gain(len(partition_table[i-1][0]),partition_table[i][0],partition_table[i+1][0])])
-                        partition_table[i][0]=False
-                    elif partition_table[i+1][0]!=False and isStopCondition(partition_table[i+1][0],OriginalValues)==True:
-                        finPartitions.append([partition_table[i+1][0],info_gain(len(partition_table[i-1][0]),partition_table[i][0],partition_table[i+1][0])])
-                        partition_table[i+1][0]=False
-                else:
-                    partition_table[i][0]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][0]=False
-                if partition_table[i-1][1]!=False:
-                    partition_table[i][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]<Partfunction(partition_table[i-1][1])]
-                    if partition_table[i][1]==[]:
-                        partition_table[i][1]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][1]=[partition_table[i-1][1][g] for g in range(len(partition_table[i-1][1])) if partition_table[i-1][1][g][1]>Partfunction(partition_table[i-1][1]) or partition_table[i-1][1][g][1]==Partfunction(partition_table[i-1][1])]    
-                        if partition_table[i+1][1]==[]:
-                            partition_table[i+1][1]=False
-                    if partition_table[i][1]==[] or partition_table[i+1][1]==[]:
-                        finPartitions.append([partition_table[i-1][1],info_gain(len(partitionCol),partition_table[i-1][0],partition_table[i-1][1])])
-                        partition_table[i-1][1]=False
-                        partition_table[i][1]=False
-                        partition_table[i+1][1]=False
-                    elif (partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True) and (partition_table[i+1][1]!=False and isStopCondition(partition_table[i+1][1],OriginalValues)==True):
-                        finPartitions.append([partition_table[i][1],info_gain(len(partition_table[i-1][1]),partition_table[i][1],partition_table[i+1][1])])
-                        finPartitions.append([partition_table[i+1][1],'Duplicate'])
-                        partition_table[i][1]=False
-                        partition_table[i+1][1]=False
-                    elif partition_table[i][1]!=False and isStopCondition(partition_table[i][1],OriginalValues)==True:
-                        finPartitions.append([partition_table[i][1],info_gain(len(partition_table[i-1][1]),partition_table[i][1],partition_table[i+1][1])])
-                        partition_table[i][1]=False
-                    elif partition_table[i+1][1]!=False and isStopCondition(partition_table[i+1][1],OriginalValues)==True:
-                        finPartitions.append([partition_table[i+1][1],info_gain(len(partition_table[i-1][1]),partition_table[i][1],partition_table[i+1][1])])
-                        partition_table[i+1][1]=False
-                else:
-                    partition_table[i][1]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][1]=False
-                j=j+2
-                #print('partition added')
-            elif k>0:
-                if  partition_table[i-2][j]!=False:
-                    partition_table[i][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]<Partfunction(partition_table[i-2][j])]
-                    if partition_table[i][j]==[]:
-                        partition_table[i][j]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-2][j][g] for g in range(len(partition_table[i-2][j])) if partition_table[i-2][j][g][1]>Partfunction(partition_table[i-2][j]) or partition_table[i-2][j][g][1]==Partfunction(partition_table[i-2][j])]
-                        if partition_table[i+1][j]==[]:
-                            partition_table[i+1][j]=False
-                    if partition_table[i][j]==[] or partition_table[i+1][j]==[]:
-                        finPartitions.append([partition_table[i-2][j],info_gain(len(partition_table[i-3][j]),partition_table[i-2][j],partition_table[i-1][j])])
-                        partition_table[i-2][j]=False
-                        partition_table[i][j]=False
-                        partition_table[i+1][j]=False
-                    elif (partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True) and (partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True):
-                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])])
-                        finPartitions.append([partition_table[i+1][j],'Duplicate'])
-                        partition_table[i][j]=False
-                        partition_table[i+1][j]=False
-                    elif partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True:
-                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])])
-                        partition_table[i][j]=False
-                    elif partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
-                        finPartitions.append([partition_table[i+1][j],info_gain(len(partition_table[i-2][j]),partition_table[i][j],partition_table[i+1][j])])
-                        partition_table[i+1][j]=False    
-                    #print('partition added')
-                else:
-                    partition_table[i][j]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]=False
-                    k=k*-1
-                j=j+1
-            elif k<0:
-                if partition_table[i-3][j]!=False:
-                    partition_table[i][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]<Partfunction(partition_table[i-3][j])]
-                    if partition_table[i][j]==[]:
-                        partition_table[i][j]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]=[partition_table[i-3][j][g] for g in range(len(partition_table[i-3][j])) if partition_table[i-3][j][g][1]>Partfunction(partition_table[i-3][j]) or partition_table[i-3][j][g][1]==Partfunction(partition_table[i-3][j])]
-                        if partition_table[i+1][j]==[]:
-                            partition_table[i+1][j]=False
-                    if partition_table[i][j]==[] or partition_table[i+1][j]==[]:
-                        finPartitions.append([partition_table[i-3][j],info_gain(len(partition_table[i-5][j]),partition_table[i-3][j],partition_table[i-4][j])])
-                        partition_table[i-3][j]=False
-                        partition_table[i][j]=False
-                        partition_table[i+1][j]=False
-                    elif (partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True) and (partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True):
-                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])])
-                        finPartitions.append([partition_table[i+1][j],'Duplicate'])
-                        partition_table[i][j]=False
-                        partition_table[i+1][j]=False
-                    elif partition_table[i][j]!=False and isStopCondition(partition_table[i][j],OriginalValues)==True:
-                        finPartitions.append([partition_table[i][j],info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])])
-                        partition_table[i][j]=False
-                    elif partition_table[i+1][j]!=False and isStopCondition(partition_table[i+1][j],OriginalValues)==True:
-                        finPartitions.append([partition_table[i+1][j],info_gain(len(partition_table[i-3][j]),partition_table[i][j],partition_table[i+1][j])])
-                        partition_table[i+1][j]=False
-                    #print('partition added')
-                else:
-                    partition_table[i][j]=False
-                    if i+1 <len(partition_table):
-                        partition_table[i+1][j]=False
-                    k=k*-1
-                j=j+1             
-        if i==0:
-            i=i+1
-        elif i==1:
-            i=i+2
-        else:
-            k=k*-1
-            i=i+2
-    #print(partition_table)
-    print('added partitions to table')
-    tot_gains=0
-    for i in range(len(finPartitions)):
-        if finPartitions[i][1]!='No Skip' and finPartitions[i][1]!='Duplicate' and finPartitions[i][1]!=False:
-            tot_gains=tot_gains+finPartitions[i][1]
-        finPartitions[i]=finPartitions[i][0]
-    return finPartitions,tot_gains
-
-
 def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     partitionCols=[]
     partitions=[]
     headers=dataTable.columnHeaders
-    classValues=attributeValues[0]
+    classValues=list(map(int,attributeValues[0]))
     for col in range(1,len(attributeValues)):
         partitionCols.append(createPartionColumn(attributeValues[col],classValues))
     print('partion columns created')
     for i in range(len(partitionCols)):
-        #do med
-        #med_parts,med_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMed)
-        #print(len(med_parts))
-        #print('med '+str(i)+' run done')
-        #if i==3:
-          #  mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
-        #do mean
-       # mean_parts,mean_gain=Partition(partitionCols[i],attributeValues[col],util.partitionMean)
-        
-        #print(len(partitionCols[i]))
-        #add max gain partitions to partitions
-        #if med_gain>mean_gain:
-         #   partitions.append(med_parts)
-        #else:
-        #    partitions.append(mean_parts)
-
             partitions.append(pt.PartitionTree(partitionCols[i]).finPartitions)
-    #discretize
-    #print(partitions[0])
-    #print(partitions[0][0])
-    #print(partitions[0][0][0])
-    #print(partitions[0][0][0][0])
+
     dataTable.partitions=partitions
     #number of parts for each attr
     numParts=[]
@@ -302,7 +50,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     unqDistValues=[]
     #ranges per each discrete value
     ranges=[]
-    
+    classes=[]
     unNamedRecord=[]
     NamedRecord=[]
     for i in range(len(list(set(classValues)))):
@@ -310,14 +58,8 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     for i in range(len(list(set(classValues)))):
         numParts.append(headers[0])
     for i in range(len(list(set(classValues)))):
-        ranges.append('Class Value')
+        classes.append(str(list(set(classValues))[i]))
 
-
-    print(len(dataTable.partitions))
-    print(len(dataTable.partitions[0]))
-    print(len(dataTable.partitions[0][0]))
-    print(len(dataTable.partitions[0][0][0]))
-    #print(dataTable.partitions[0][0][0][0])
     for i in range(len(dataTable.partitions)):#all 7 fin parts
         inc=1
         for j in range(len(dataTable.partitions[i])): #each part in a given fin part
@@ -331,10 +73,12 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
             ranges.append(rangersHelper)
             inc=inc+1
         
-
-    for i in range(len(numParts)):
-        unNamedRecord.append([numParts[i],unqDistValues[i],str(min(ranges[i]))+" - "+str(max(ranges[i]))])
-        NamedRecord.append([numParts[i],unqDistValues[i],"I"+str(i+1),str(min(ranges[i]))+" - "+str(max(ranges[i]))])
+    for i in range(len(list(set(classValues)))):
+        unNamedRecord.append([numParts[i],unqDistValues[i],classes[i]])
+        NamedRecord.append([numParts[i],unqDistValues[i],"I"+str(i+1),classes[i]])
+    for i in range(len(list(set(classValues))),len(numParts)):
+        unNamedRecord.append([numParts[i],unqDistValues[i],str(min(ranges[i-len(list(set(classValues)))]))+" - "+str(max(ranges[i-len(list(set(classValues)))]))])
+        NamedRecord.append([numParts[i],unqDistValues[i],"I"+str(i+1),str(min(ranges[i-len(list(set(classValues)))]))+" - "+str(max(ranges[i-len(list(set(classValues)))]))])
     dataTable.namedDisTbl=NamedRecord
     dataTable.unNamedDistTbl=unNamedRecord
     finpartitionCols=partitions
@@ -349,9 +93,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
         CollapsePartitions.append(helper_arr)
         #print(CollapsePartitions[i])
         helper_arr=[]
-    
-    #print(len(finpartitionCols))    
-    #print(finpartitionCols[0])
+
     #sort partition
     for i in range(len(CollapsePartitions)):
         CollapsePartitions[i].sort(key=util.orderRecords)
@@ -366,20 +108,19 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
         if i==0:
             discretizedCols.append(classValues)
         else: 
-            discretizedCols.append(CollapsePartitions[i-1])
-    #rint('return ready')
-    #print(discretizedCols)
+            discretizedCols.append([data[1] for data in CollapsePartitions[i-1]])
+
     
     
     return discretizedCols,util.values_to_records(discretizedCols)
 def setVal(inc):
     return inc
 def TTSplit(records:list, percent):
-    data0=[records[i] for i in range(len(records)) if records[i][0]==0.0] 
-    data1=[records[i] for i in range(len(records)) if records[i][0]==1.0] 
+    data0=[records[i] for i in range(len(records)) if records[i][0]==0] 
+    data1=[records[i] for i in range(len(records)) if records[i][0]==1] 
     data0num=int(len(data0)*percent)
     data1num=int(len(data1)*percent)
-    testData=random.sample(data0,data0num)+random.sample(data1,data1num)
+    testData=util.sample(data0,data0num)+util.sample(data1,data1num)
     trainData=[records[i] for i in range(len(records)) if records[i] not in testData]
     return trainData,testData
 
@@ -417,29 +158,58 @@ def  IdentifyRedundancies(data,threshold):
                 correlationMatrix[i][j]=CalcCoeffient(data[i],data[j])
                 if abs(correlationMatrix[i][j]) > threshold:
                     highlyCorrelated.append([i,j])
-            
-    
+
     return correlationMatrix, highlyCorrelated
 
-def removeRedundancies(redundantArr:list, num_attr):
+def removeRedundancies(redundantArr:list):
+    if len(redundantArr)==0:
+        return None
+    print(redundantArr)
     #sort by count
-    remaining=redundantArr
+    remaining=redundantArr.copy()
     rmvInd=[]
-    unOrdered=[]
-    for i in range(len(redundantArr)):
+    flat=[]
+    for i in range(len(remaining)):
         for j in range(2):
-            unOrdered.append(redundantArr[i][j])
+            flat.append(remaining[i][j])
     counts=[]
-    for i in range(num_attr):
-        counts.append(unOrdered.count(i))
-    k=0
-    while k<len(remaining):
-        for i in range(len(remaining)):
-            if counts.index(max(counts)) in remaining[i]:
-                remaining[i]=='skip'
-                k=k+1
-        rmvInd.append(counts.index(max(counts)))
-        counts[counts.index(max(counts))]=0
+    
+    for i in range(max(list(set(flat)))+2):
+        if i-1 in list(set(flat)):
+            counts.append(flat.count(i-1))
+        else:
+            counts.append(0)
+    
+    #print(counts)
+    rmvInd=[]
+    while len(remaining)>0:
+        #find and remove all refs to max count
+        maximum=max(counts)
+        max_ind=counts.index(maximum)#ref to remove
+        if len(redundantArr)==1:
+            v=max_ind-1
+        else:
+            v=max_ind
+        counts[max_ind]=0
+        if v in flat:
+            rmvInd.append(max_ind)
+            remaining=[pair for pair in remaining if v not in pair]
+            #recount
+            if len(remaining)>0:
+                flat=[]
+                for i in range(len(remaining)):
+                    for j in range(2):
+                        flat.append(remaining[i][j])  
+
+                counts=[]
+                if len(flat)>0:
+                    for i in range(max(list(set(flat)))+1):
+                        if i in list(set(flat)):
+                            counts.append(flat.count(i))
+                        else:
+                            counts.append(0)             
+                #loop again
+        print(rmvInd)
     return rmvInd
 
 
@@ -483,33 +253,35 @@ def generateItemset(itemset):
     for i in range(len(itemset)):
         txt=txt+str(itemset[i])+"\n"
     return txt
-from itertools import chain
+
 def Apriori(namedTable, records, headers,threshold=2):
     itemset=getItemset(namedTable)
     records=ConvertRecord_to_itemsets(namedTable,records,headers)
     Lset=[]
     c1=itemset
-    flat_records = list(chain.from_iterable(records))
+    flat_records=[record[i] for record in records for i in range(len(record))]
     L1=[([c1[i]],flat_records.count(c1[i])) for i in range(len(c1)) if flat_records.count(c1[i])>threshold or flat_records.count(c1[i])==threshold]
     Lset.append(L1)
-    inc=0
+    inc=1
     while True:
-        inc=inc+1
+        
         if len(Lset)==1:
             #create c
             c=[tup[0] for tup in Lset[-1]]
             #concat c
-            concat_c=[]
-            for i in range(len(c)-1):
-                for j in range(i+inc,len(c)):
-                    concat_c.append(c[i]+c[j])
+            concat_c = []
+            for i in range(len(c)):
+                for j in range(i + 1, len(c)):
+                    if j>i:
+                        concat_c.append(c[i] +c[j])
             #create l
             counts=[]
 
             for i in range(len(concat_c)):
                 count=0
-                flag = True
+                
                 for record in records:
+                    flag = True
                     for j in range(len(concat_c[i])):
                         if concat_c[i][j] not in record:
                             flag = False
@@ -521,41 +293,57 @@ def Apriori(namedTable, records, headers,threshold=2):
             Lset.append(l)
             #if empty stop
         else:
-            # create c
+            #create blocks
             c = [tup[0] for tup in Lset[-1]]
-            # concat c
-            concat_c = []
-            for i in range(len(c) - 1):
-                if i+inc < len(c):
-                    for j in range(i + inc, len(c)):
-                        concat_c.append(c[i] +[c[j][0]])
+            neighbor_tuples=[]#group like tuples together
+            neighbor_helper=[]
+            resident_arr=[]
+            resident_helper=[]
+            for i in range(1,len(c)):
+                if c[i][:inc] == c[i-1][:inc]:
+                    neighbor_helper.append(c[i-1][:inc+1])
+                    resident_helper.append(c[i-1][-1])
                 else:
-                    return c
-            # create l
-            counts = []
+                    neighbor_helper.append(c[i-1][:inc+1])
+                    resident_helper.append(c[i-1][-1])
+                    resident_arr.append(resident_helper)
+                    neighbor_tuples.append([neighbor_helper,resident_arr])
+                    neighbor_helper=[]
+                    resident_arr=[]
+                    resident_helper=[]
+            
+            
+            concat_c=[]
+            for block in neighbor_tuples:
+                for i in range(len(block[0])-1):
+                    for j in range(i+1,len(block[1][0])):
+                        concat_c.append(block[0][i]+[block[1][0][j]])
 
+            #count
+            counts=[]
             for i in range(len(concat_c)):
-                count = 0
-                flag = True
+                count=0
                 for record in records:
+                    flag = True
                     for j in range(len(concat_c[i])):
                         if concat_c[i][j] not in record:
                             flag = False
-                        else:
-                            flag=True
-                    if flag == True:
-                        count = count + 1
+                    if flag==True:
+                        count=count+1
                 counts.append(count)
-            l = [(concat_c[i], counts[i]) for i in range(len(concat_c)) if
-                 counts[i] > threshold or counts[i] == threshold]
-            # add l if not empty
-            if len(l)>0:
-                Lset.append(l)
-            # if empty stop
+            l=[(concat_c[i],counts[i]) for i in range(len(concat_c)) if counts[i] > threshold or counts[i] == threshold]
+            if len(l)==0:
+                return [tup[0] for tup in Lset[-1]]
             else:
-                break
+                Lset.append(l)
+                inc=inc+1
+                #if len(Lset)==2:
+                    #del Lset[0]
+                    #gc.collect()
+            #if empty stop
 
-    return [tup[0] for tup in Lset[-1]]
+
+    
 
 def cleanFreqItemSet(FItemSet,namedTable):
     txt='Removed Itemsets\n'
@@ -584,15 +372,19 @@ def GenerateAssociationRules(FreqItemSet,threshold,namedTable,records,headers):
     subsets=[]
     #generate all possible subsets
     for k in range(len(FreqItemSet)):
-        subsets.append([FreqItemSet[k][i:j] for i in range(len(FreqItemSet[k])) for j in range(i+1,len(FreqItemSet[k])+1)])
+        list=[FreqItemSet[k][i:j] for i in range(len(FreqItemSet[k])) for j in range(i+1,len(FreqItemSet[k])+1)]
+        subsets.append(list)
     #Build rules
     rules=[]
     for subset in subsets:
-        for i in range(len(subset) - 1):
+        for i in range(len(subset)):
             if i + 1 < len(subset):
                 for j in range(i + 1, len(subset)):
                     if len(set(subset[i]).intersection(subset[j]))==0:
                         rules.append([subset[i],subset[j]])
+                        rules.append([subset[j],subset[i]])
+            
+
 
     c,s=util.associationCalc(rules,ConvertRecord_to_itemsets(namedTable,records,headers))
     for i in range(len(rules)):
@@ -620,59 +412,71 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
             if len(rules[i][0])>1:
                 for j in range(len(rules[i][0])):
                     if j==len(rules[i][0])-1:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,[i][0][j]))+" => "
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,rules[i][0][j]))+" => "
                     else:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,[i][0][j]))+" ^ "
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,rules[i][0][j]))+" ^ "
             else:
-                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0]))+"="+str(util.nameToValue(namedTable,rules[i][0]))+" => "
+                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][0]))+"="+str(util.nameToValue(namedTable,rules[i][0][0]))+" => "
             if len(rules[i][1])>1:
                 for j in range(len(rules[i][1])):
                     if j==len(rules[i][0])-1:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,[i][1][j]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,rules[i][1][j]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
                     else:
-                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,[i][1][j]))+" ^ "
+                        F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,rules[i][1][j]))+" ^ "
             else:
-                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1]))+"="+str(util.nameToValue(namedTable,rules[i][1]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][0]))+"="+str(util.nameToValue(namedTable,rules[i][1][0]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
         return F1txt
     elif format=='Format-2':
         for i in range(len(rules)):
             if len(rules[i][0])>1:
                 for j in range(len(rules[i][0])):
                     if j==len(rules[i][0])-1:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,[i][0][j]))+"]"+" => "
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,rules[i][0][j]))+"]"+" => "
                     else:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,[i][0][j]))+"]" + " ^ "
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,rules[i][0][j]))+"]" + " ^ "
             else:
-                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0]))+"["+str(util.nameToRange(namedTable,rules[i][0]))+"]"+ " => "
+                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][0]))+"["+str(util.nameToRange(namedTable,rules[i][0][0]))+"]"+ " => "
             if len(rules[i][1])>1:
                 for j in range(len(rules[i][1])):
                     if j==len(rules[i][0])-1:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,[i][1][j]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,rules[i][1][j]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
                     else:
-                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,[i][1][j]))+"]"+" ^ "
+                        F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,rules[i][1][j]))+"]"+" ^ "
             else:
-                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1]))+"["+str(util.nameToRange(namedTable,rules[i][1]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][0]))+"["+str(util.nameToRange(namedTable,rules[i][1][0]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
         return F2txt
 
 def predict(rules,dependentVariable,testData,nameTable,headers):
     finRules=rules.copy()
-    testData=testData.copy()
+    #testData=testData.copy()
+    records=ConvertRecord_to_itemsets(nameTable,testData,headers)
     #clean rules
     for i in range(len(rules)):
-        if util.nameToAttribute(nameTable,rules[i][1]) != dependentVariable or len(rules[i][1]) > 1:
+        if len(rules[i][1]) > 1 or util.nameToAttribute(nameTable,rules[i][1][0]) != dependentVariable:
+            #print(rules[i][1][0])
+            #print( util.nameToAttribute(nameTable,rules[i][1][0]))
             finRules.remove(rules[i])
-    predValues=list(set([finRules[i][1] for i in finRules]))#values that can be predicted
+    predValues=list(set([finRules[i][1][0] for i in range(len(finRules))]))#values that can be predicted
     predictions=[]
-    for rule in finRules:
-        for record in testData:
-             if set(record[0]).intersection(set(util.nameToValue(predValues)))>0:
+    for record in records:
+        actual=record[0]
+        done=False
+        for rule in rules:
+            if done==False:
                 # check if rule applies
-                if len(set([util.nameToValue(nameTable,record) for record in rule[0]]).intersection(set(record)))==len(rule[0]):
+                target=rule[1][0]
+                flag=True
+                for item in rule[0]:
+                    if item not in record:
+                        flag=False
+                if flag==True:
                     #check if prrediction is correct
-                    if len(set(record[0]).intersection(set(util.nameToValue(nameTable,rule[1]))))==1:
-                        predictions.append([True,rule[1]])
+                    if actual==target:
+                        predictions.append([True,rule[1][0]])
+                        done=True
                     else:
-                        predictions.append([False,rule[1],record[0]])
+                        predictions.append([False,rule[1][0],record[0]])
+                        done=True
 
     total_correct=0
     total_incorrect=0
@@ -682,34 +486,44 @@ def predict(rules,dependentVariable,testData,nameTable,headers):
     for prediction in predictions:
         if prediction[0]==True:
             total_correct=total_correct+1
-            correct.append(util.nameToValue(nameTable,prediction[1]))
+            correct.append(prediction[1])
         else:
             total_incorrect=total_incorrect+1
-            incorrect.append([util.nameToValue(nameTable,prediction[1]),util.nameToValue(nameTable,prediction[2])])
+            incorrect.append([prediction[1],prediction[2]])
 
     unq_val=list(set([record[0] for record in testData]))
-    counts = [[0, 0] for i in range(len(unq_val))]
+    perCorr = []
 
-    pred_matrix="Unique Values in the |  Predicted Values  | \n"
-    pred_matrix=pred_matrix+"Dependent variable   |"
+    pred_matrix="|Unique Values in the Dependent variable |  Predicted Values   \n"
+    pred_matrix=pred_matrix+"|             (Descision Attribute)                 |"
     for i in range(len(predValues)):
-        pred_matrix+=str(predValues[i])+"         |"
-    pred_matrix+="\n(Descision Attribute)   |             |           |\n"
-    pred_matrix+="--------------------------------------------------------------------\n"
+        pred_matrix+="       "+str(int(util.nameToValue(nameTable,predValues[i])))+"  "
+    pred_matrix+="\n---------------------------------------------------------------------------------"
     for i in range(len(unq_val)):
-        for j in range(i+1,len(unq_val)):
+        pred_matrix+="\n                                                           "+str(util.nameToValue(nameTable,unq_val[i]))+"|    "
+        perCorr_helper=[]
+        for j in range(len(unq_val)):
             if i==j:#correct predictions
-                pred_matrix+=str(unq_val[i])+"                |"+str(correct.count(unq_val[i]))
+                pred_matrix+=str(correct.count(unq_val[i]))+"     "
             else:
                 #incorrect thought be j
                 j_count=0
                 for bad in incorrect:
-                    if set(bad[0]).intersection(set(unq_val[i]))>0:
-                        if set(bad[1]).intersection(set(unq_val[j]))>0:
+                    if bad[0] in unq_val[i]:
+                        if bad[1] in unq_val[j]:
                             j_count+=1
-                pred_matrix+="|         "+str(j_count)+"         |"
-    pred_matrix+="\n"
-    pred_matrix+="Total Correct: "+str(len(correct))+"\n"
+                pred_matrix+=str(j_count)+"    "
+                perCorr_helper.append(j_count)
+        #sum j_counts
+        sum=0
+        for num in perCorr_helper:
+            sum+=num
+        perCorr.append((((correct.count(unq_val[i])+sum))/(total_correct+total_incorrect))*100)
+    pred_matrix+="\n---------------------------------------------------------------------------------\n"
+    for i in range(len(unq_val)):
+        pred_matrix+=str(util.nameToValue(nameTable,unq_val[i]))+": Percent of Correct Prediction = "+str(perCorr[i])+"\n"
+    pred_matrix+="\n---------------------------------------------------------------------------------"
+    pred_matrix+="\nTotal Correct: "+str(total_correct)+"   Total Incorrect: "+str(total_incorrect)+"  ("+str((total_incorrect/(total_incorrect+total_correct))*100)+"%)"
     return pred_matrix
 
 

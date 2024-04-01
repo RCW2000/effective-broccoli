@@ -12,21 +12,19 @@ class PartitionNode:
         self.sibling=sibling
         self.root=root
 
-        if self.data==[]:
-            self.values=[]
-            self.uniqueClasses=[]
-            self.card=len(self.values)
-            self.classFrequencies = []
-        else:
-            self.values=[data[1] for data in self.data]
-            self.uniqueClasses=list(set([data[2] for data in self.data]))
-            self.card=len([data[1] for data in self.data])
-            self.classFrequencies=[[data[2] for data in self.data].count(value) for value in self.uniqueClasses]
+
+
+        self.values=[data[1] for data in self.data]
+        self.uniqueClasses=list(set([data[2] for data in self.data]))
+        self.card=len([data[1] for data in self.data])
+        self.classFrequencies=[[data[2] for data in self.data].count(value) for value in self.uniqueClasses]
         
         if isRoot==False:
             self.isStopped=self.STOP()
             self.entropy=self.Entropy()
             self.infogain=None
+        else:
+            self.isStopped =False
         
         
         
@@ -44,15 +42,24 @@ class PartitionNode:
     def STOP(self)->bool:
         #stop condition
         if self.data!=[]:
-            n=len(list(set(self.root.data[:][1])))
-            if len(self.uniqueClasses)==1:
+            n=len(list(set([data[1] for data in self.root.data])))
+            if len(self.uniqueClasses)==1:#should stop bad median partitian
                 self.color='purple'
                 return True
             if min(self.classFrequencies)/max(self.classFrequencies) <0.5:
                 if len(self.uniqueClasses) < math.floor(n/2) or len(self.uniqueClasses) == math.floor(n/2):
                     self.color='purple'
                     return True
-            
+            #add condition to stop if bad mean partition
+            mean=util.mean(self.values)
+            if len([value for value in self.values if value < mean]) == 0 or len([value for value in self.values if value < mean])==len(self.values):
+                self.color='purple'
+                return True
+            median=util.median(self.values)
+            # add condition to stop if bad median partition
+            if len([value for value in self.values if value < median]) == 0 or len([value for value in self.values if value < median])==len(self.values):
+                self.color='purple'
+                return True
             return False
     
     def Entropy(self):
@@ -61,6 +68,7 @@ class PartitionNode:
         for i in range(len(self.uniqueClasses)):
            sum=sum + (-1*(self.classFrequencies[i])*math.log2(self.classFrequencies[i]))
         return sum
+
 
 class PartitionTree:
     def __init__(self,data:list):
@@ -85,6 +93,7 @@ class PartitionTree:
 
 
     def Partition(self,function):
+
         #dfs
         closed=set()
         fringe=[]
@@ -95,27 +104,17 @@ class PartitionTree:
                 return self.medfinPartitions,partitions
             node: PartitionNode
             node,partitions=fringe.pop(0)
-            if node.color=='purple':
+            if node.isStopped==True:
                 node.infogain=(((node.card/node.parent.card)*node.entropy) + ((node.sibling.card/node.parent.card)*node.sibling.entropy))
                 if function==util.median:
                     self.medfinPartitions.append(node)
                 elif function==util.mean:
                      self.meanfinPartitions.append(node)
                 continue
-            elif node.parent is not None and node.grandparent is not None and node.card==node.parent.card:
-                node.color='black'
-                node.parent.color='purple'
-                node.parent.infogain=(((node.parent.card/node.grandparent.card)*node.parent.entropy) + ((node.titi.card/node.grandparent.card)*node.titi.entropy))
-                if function==util.median:
-                    self.medfinPartitions.append(node.parent)
-                elif function==util.mean:
-                    self.meanfinPartitions.append(node.parent)
-                continue
-            elif node.card<1:
-                continue
+
             if str(node) not in closed:
                 closed.add(str(node))
-                if node.color=='blue' and node.card>0:
+                if node.color=='blue':
                     for state in node.splitNode(function(node.values),self.root):
                         fringe.insert(0,(state,partitions+[node]))
 
