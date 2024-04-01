@@ -3,7 +3,7 @@ import util
 def Apriori(namedTable, records, headers,threshold=2):
     itemset=dm.getItemset(namedTable)
     records=dm.ConvertRecord_to_itemsets(namedTable,records,headers)
-    flat_records=[record[i] for record in records for i in range(len(record))]
+    
     c1=itemset
     L1=[([c1[i]],flat_records.count(c1[i])) for i in range(len(c1)) if flat_records.count(c1[i])>threshold or flat_records.count(c1[i])==threshold]
     Lset=[]

@@ -3,6 +3,7 @@ import math
 import PySimpleGUI as sg
 import DM_Assignment_1 as dm
 import texttable as tt
+import random
 class DataTable:
     def __init__(self, originalData:list):
         self.columnHeaders=originalData[0]
@@ -252,4 +253,13 @@ def display_Records(dataTable:DataTable,rmv_Ind):
             da.insert(i,['null' for i in range(len(da[0]))])
     return values_to_records(da)
 
-    
+def sample(records,num):
+    rlist=records.copy()
+    rtn=[]
+    while num>0:
+        rtn_ind=random.randrange(0,len(rlist))
+        rtn.append(rlist[rtn_ind])
+        rlist.remove(rlist[rtn_ind])
+        num=num-1
+    return rtn
+

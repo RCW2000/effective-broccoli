@@ -120,7 +120,7 @@ def TTSplit(records:list, percent):
     data1=[records[i] for i in range(len(records)) if records[i][0]==1] 
     data0num=int(len(data0)*percent)
     data1num=int(len(data1)*percent)
-    testData=random.sample(data0,data0num)+random.sample(data1,data1num)
+    testData=util.sample(data0,data0num)+util.sample(data1,data1num)
     trainData=[records[i] for i in range(len(records)) if records[i] not in testData]
     return trainData,testData
 
@@ -253,13 +253,13 @@ def generateItemset(itemset):
     for i in range(len(itemset)):
         txt=txt+str(itemset[i])+"\n"
     return txt
-from itertools import chain
+
 def Apriori(namedTable, records, headers,threshold=2):
     itemset=getItemset(namedTable)
     records=ConvertRecord_to_itemsets(namedTable,records,headers)
     Lset=[]
     c1=itemset
-    flat_records = list(chain.from_iterable(records))
+    flat_records=[record[i] for record in records for i in range(len(record))]
     L1=[([c1[i]],flat_records.count(c1[i])) for i in range(len(c1)) if flat_records.count(c1[i])>threshold or flat_records.count(c1[i])==threshold]
     Lset.append(L1)
     inc=1
@@ -448,7 +448,7 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
 
 def predict(rules,dependentVariable,testData,nameTable,headers):
     finRules=rules.copy()
-    testData=testData.copy()
+    #testData=testData.copy()
     records=ConvertRecord_to_itemsets(nameTable,testData,headers)
     #clean rules
     for i in range(len(rules)):
@@ -460,19 +460,23 @@ def predict(rules,dependentVariable,testData,nameTable,headers):
     predictions=[]
     for record in records:
         actual=record[0]
+        done=False
         for rule in rules:
-            # check if rule applies
-            target=rule[1][0]
-            flag=True
-            for item in rule[0]:
-                if item not in record:
-                    flag=False
-            if flag==True:
-                #check if prrediction is correct
-                if actual==target:
-                    predictions.append([True,rule[1][0]])
-                else:
-                    predictions.append([False,rule[1][0],record[0]])
+            if done==False:
+                # check if rule applies
+                target=rule[1][0]
+                flag=True
+                for item in rule[0]:
+                    if item not in record:
+                        flag=False
+                if flag==True:
+                    #check if prrediction is correct
+                    if actual==target:
+                        predictions.append([True,rule[1][0]])
+                        done=True
+                    else:
+                        predictions.append([False,rule[1][0],record[0]])
+                        done=True
 
     total_correct=0
     total_incorrect=0
@@ -488,18 +492,19 @@ def predict(rules,dependentVariable,testData,nameTable,headers):
             incorrect.append([prediction[1],prediction[2]])
 
     unq_val=list(set([record[0] for record in testData]))
-    #counts = [[0, 0] for i in range(len(unq_val))]
+    perCorr = []
 
     pred_matrix="|Unique Values in the Dependent variable |  Predicted Values   \n"
-    pred_matrix=pred_matrix+"|             (Descision Attribute)                  |"
+    pred_matrix=pred_matrix+"|             (Descision Attribute)                 |"
     for i in range(len(predValues)):
         pred_matrix+="       "+str(int(util.nameToValue(nameTable,predValues[i])))+"  "
     pred_matrix+="\n---------------------------------------------------------------------------------"
     for i in range(len(unq_val)):
-        pred_matrix+="\n                                           "+str(util.nameToValue(nameTable,unq_val[i]))+"|  "
-        for j in range(i,len(unq_val)):
+        pred_matrix+="\n                                                           "+str(util.nameToValue(nameTable,unq_val[i]))+"|    "
+        perCorr_helper=[]
+        for j in range(len(unq_val)):
             if i==j:#correct predictions
-                pred_matrix+=str(correct.count(unq_val[i]))+"  "
+                pred_matrix+=str(correct.count(unq_val[i]))+"     "
             else:
                 #incorrect thought be j
                 j_count=0
@@ -507,8 +512,18 @@ def predict(rules,dependentVariable,testData,nameTable,headers):
                     if bad[0] in unq_val[i]:
                         if bad[1] in unq_val[j]:
                             j_count+=1
-                pred_matrix+="  "+str(j_count)
-    pred_matrix+="\nTotal Correct: "+str(len(correct))
+                pred_matrix+=str(j_count)+"    "
+                perCorr_helper.append(j_count)
+        #sum j_counts
+        sum=0
+        for num in perCorr_helper:
+            sum+=num
+        perCorr.append((((correct.count(unq_val[i])+sum))/(total_correct+total_incorrect))*100)
+    pred_matrix+="\n---------------------------------------------------------------------------------\n"
+    for i in range(len(unq_val)):
+        pred_matrix+=str(util.nameToValue(nameTable,unq_val[i]))+": Percent of Correct Prediction = "+str(perCorr[i])+"\n"
+    pred_matrix+="\n---------------------------------------------------------------------------------"
+    pred_matrix+="\nTotal Correct: "+str(total_correct)+"   Total Incorrect: "+str(total_incorrect)+"  ("+str((total_incorrect/(total_incorrect+total_correct))*100)+"%)"
     return pred_matrix
 
 
