@@ -106,7 +106,7 @@ def generate_Corelation_Matrix_Report(dataTable:DataTable,threshold):
     for i in range(len(head)):
         dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+str(head[i])+" "
     for l in range(len(matrix)):
-        dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+"\n" + str(head[i]) +" "
+        dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+"\n" + str(head[l]) +" "
         for j in range(len(matrix)):
             dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+str(matrix[l][j])+" "
     dataTable.corrMatrixTXT=dataTable.corrMatrixTXT+"\nThreshold Value: "+str(threshold)+"\nHighly Correlated Attributes:\n"
@@ -229,17 +229,17 @@ def associationCalc(rules,data:list):
 
 def nameToAttribute(nameTable,name):
     for i in range(len(nameTable)):
-        if len(set(name).intersection(set(nameTable[i])))>0:
+        if name in nameTable[i]:
             return nameTable[i][0]
 
 def nameToValue(nameTable,name):
     for i in range(len(nameTable)):
-        if len(set(name).intersection(set(nameTable[i])))>0:
+        if name in nameTable[i]:
             return nameTable[i][1]
         
 def nameToRange(nameTable,name):
     for i in range(len(nameTable)):
-        if len(set(name).intersection(set(nameTable[i])))>0:
+        if name in nameTable[i]:
             return nameTable[i][3]
         
 def display_Records(dataTable:DataTable,rmv_Ind):

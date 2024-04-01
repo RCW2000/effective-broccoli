@@ -36,7 +36,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     partitionCols=[]
     partitions=[]
     headers=dataTable.columnHeaders
-    classValues=attributeValues[0]
+    classValues=list(map(int,attributeValues[0]))
     for col in range(1,len(attributeValues)):
         partitionCols.append(createPartionColumn(attributeValues[col],classValues))
     print('partion columns created')
@@ -58,7 +58,7 @@ def entropy_discretization(attributeValues:list,dataTable:util.DataTable):
     for i in range(len(list(set(classValues)))):
         numParts.append(headers[0])
     for i in range(len(list(set(classValues)))):
-        classes.append('Class Value')
+        classes.append(str(list(set(classValues))[i]))
 
     for i in range(len(dataTable.partitions)):#all 7 fin parts
         inc=1
@@ -372,15 +372,19 @@ def GenerateAssociationRules(FreqItemSet,threshold,namedTable,records,headers):
     subsets=[]
     #generate all possible subsets
     for k in range(len(FreqItemSet)):
-        subsets.append([FreqItemSet[k][i:j] for i in range(len(FreqItemSet[k])) for j in range(i+1,len(FreqItemSet[k])+1)])
+        list=[FreqItemSet[k][i:j] for i in range(len(FreqItemSet[k])) for j in range(i+1,len(FreqItemSet[k])+1)]
+        subsets.append(list)
     #Build rules
     rules=[]
     for subset in subsets:
-        for i in range(len(subset) - 1):
+        for i in range(len(subset)):
             if i + 1 < len(subset):
                 for j in range(i + 1, len(subset)):
                     if len(set(subset[i]).intersection(subset[j]))==0:
                         rules.append([subset[i],subset[j]])
+                        rules.append([subset[j],subset[i]])
+            
+
 
     c,s=util.associationCalc(rules,ConvertRecord_to_itemsets(namedTable,records,headers))
     for i in range(len(rules)):
@@ -412,7 +416,7 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
                     else:
                         F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"="+str(util.nameToValue(namedTable,rules[i][0][j]))+" ^ "
             else:
-                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0]))+"="+str(util.nameToValue(namedTable,rules[i][0]))+" => "
+                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][0][0]))+"="+str(util.nameToValue(namedTable,rules[i][0][0]))+" => "
             if len(rules[i][1])>1:
                 for j in range(len(rules[i][1])):
                     if j==len(rules[i][0])-1:
@@ -420,7 +424,7 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
                     else:
                         F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"="+str(util.nameToValue(namedTable,rules[i][1][j]))+" ^ "
             else:
-                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1]))+"="+str(util.nameToValue(namedTable,rules[i][1]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                F1txt=F1txt+str(util.nameToAttribute(namedTable,rules[i][1][0]))+"="+str(util.nameToValue(namedTable,rules[i][1][0]))+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
         return F1txt
     elif format=='Format-2':
         for i in range(len(rules)):
@@ -431,7 +435,7 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
                     else:
                         F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][j]))+"["+str(util.nameToRange(namedTable,rules[i][0][j]))+"]" + " ^ "
             else:
-                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0]))+"["+str(util.nameToRange(namedTable,rules[i][0]))+"]"+ " => "
+                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][0][0]))+"["+str(util.nameToRange(namedTable,rules[i][0][0]))+"]"+ " => "
             if len(rules[i][1])>1:
                 for j in range(len(rules[i][1])):
                     if j==len(rules[i][0])-1:
@@ -439,28 +443,36 @@ def generateSurvRules(rules,namedTable,format, threshold,data):
                     else:
                         F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][j]))+"["+str(util.nameToRange(namedTable,rules[i][1][j]))+"]"+" ^ "
             else:
-                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1]))+"["+str(util.nameToRange(namedTable,rules[i][1]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
+                F2txt=F2txt+str(util.nameToAttribute(namedTable,rules[i][1][0]))+"["+str(util.nameToRange(namedTable,rules[i][1][0]))+"]"+ " Confidence: "+str(conf[i])+ " Support: "+str(sup[i])+"\n"
         return F2txt
 
 def predict(rules,dependentVariable,testData,nameTable,headers):
     finRules=rules.copy()
     testData=testData.copy()
+    records=ConvertRecord_to_itemsets(nameTable,testData,headers)
     #clean rules
     for i in range(len(rules)):
-        if util.nameToAttribute(nameTable,rules[i][1]) != dependentVariable or len(rules[i][1]) > 1:
+        if len(rules[i][1]) > 1 or util.nameToAttribute(nameTable,rules[i][1][0]) != dependentVariable:
+            #print(rules[i][1][0])
+            #print( util.nameToAttribute(nameTable,rules[i][1][0]))
             finRules.remove(rules[i])
-    predValues=list(set([finRules[i][1] for i in finRules]))#values that can be predicted
+    predValues=list(set([finRules[i][1][0] for i in range(len(finRules))]))#values that can be predicted
     predictions=[]
-    for rule in finRules:
-        for record in testData:
-             if set(record[0]).intersection(set(util.nameToValue(predValues)))>0:
-                # check if rule applies
-                if len(set([util.nameToValue(nameTable,record) for record in rule[0]]).intersection(set(record)))==len(rule[0]):
-                    #check if prrediction is correct
-                    if len(set(record[0]).intersection(set(util.nameToValue(nameTable,rule[1]))))==1:
-                        predictions.append([True,rule[1]])
-                    else:
-                        predictions.append([False,rule[1],record[0]])
+    for record in records:
+        actual=record[0]
+        for rule in rules:
+            # check if rule applies
+            target=rule[1][0]
+            flag=True
+            for item in rule[0]:
+                if item not in record:
+                    flag=False
+            if flag==True:
+                #check if prrediction is correct
+                if actual==target:
+                    predictions.append([True,rule[1][0]])
+                else:
+                    predictions.append([False,rule[1][0],record[0]])
 
     total_correct=0
     total_incorrect=0
@@ -470,34 +482,33 @@ def predict(rules,dependentVariable,testData,nameTable,headers):
     for prediction in predictions:
         if prediction[0]==True:
             total_correct=total_correct+1
-            correct.append(util.nameToValue(nameTable,prediction[1]))
+            correct.append(prediction[1])
         else:
             total_incorrect=total_incorrect+1
-            incorrect.append([util.nameToValue(nameTable,prediction[1]),util.nameToValue(nameTable,prediction[2])])
+            incorrect.append([prediction[1],prediction[2]])
 
     unq_val=list(set([record[0] for record in testData]))
-    counts = [[0, 0] for i in range(len(unq_val))]
+    #counts = [[0, 0] for i in range(len(unq_val))]
 
-    pred_matrix="Unique Values in the |  Predicted Values  | \n"
-    pred_matrix=pred_matrix+"Dependent variable    |_______________________"
+    pred_matrix="|Unique Values in the Dependent variable |  Predicted Values   \n"
+    pred_matrix=pred_matrix+"|             (Descision Attribute)                  |"
     for i in range(len(predValues)):
-        pred_matrix+=str(predValues[i])+"         |"
-    pred_matrix+="\n(Descision Attribute) |             |           |\n"
-    pred_matrix+="--------------------------------------------------------------------\n"
+        pred_matrix+="       "+str(int(util.nameToValue(nameTable,predValues[i])))+"  "
+    pred_matrix+="\n---------------------------------------------------------------------------------"
     for i in range(len(unq_val)):
-        for j in range(i+1,len(unq_val)):
+        pred_matrix+="\n                                           "+str(util.nameToValue(nameTable,unq_val[i]))+"|  "
+        for j in range(i,len(unq_val)):
             if i==j:#correct predictions
-                pred_matrix+=str(unq_val[i])+"                |"+str(correct.count(unq_val[i]))
+                pred_matrix+=str(correct.count(unq_val[i]))+"  "
             else:
                 #incorrect thought be j
                 j_count=0
                 for bad in incorrect:
-                    if set(bad[0]).intersection(set(unq_val[i]))>0:
-                        if set(bad[1]).intersection(set(unq_val[j]))>0:
+                    if bad[0] in unq_val[i]:
+                        if bad[1] in unq_val[j]:
                             j_count+=1
-                pred_matrix+="|         "+str(j_count)+"         |"
-    pred_matrix+="\n"
-    pred_matrix+="Total Correct: "+str(len(correct))+"\n"
+                pred_matrix+="  "+str(j_count)
+    pred_matrix+="\nTotal Correct: "+str(len(correct))
     return pred_matrix
 
 
