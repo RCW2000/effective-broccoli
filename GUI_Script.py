@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 import DM_Assignment_1 as dm
+import DM_Assignment_2 as dm2
 import util
 
 sg.theme('BrightColors')
@@ -52,6 +53,7 @@ p12_tab=[
         [sg.Input('Econ-TRAIN.csv',key='p12I1')],
         [sg.Text('Enter Testing Set Filename')],
         [sg.Input('Econ-TEST.csv',key='p12I2')],
+        [sg.Text('Enter Train/Test Split Percentage'),sg.Input('',key='p12I3')],
         [sg.Button('Run Train/Test Split',key='p12B5')],
         [sg.Button('Download Data',key='p12B6')]
     ])]
@@ -456,9 +458,9 @@ while True:  # Event Loop
         dataTable.CorelationMatrix,dataTable.redundantAttr=dm.IdentifyRedundancies(dataTable.currentAttributeValues[1:],float(values['p2I2']))
         cm=util.generate_Corelation_Matrix_Report(dataTable,float(values['p2I2']))
         sg.popup_scrolled(cm, title='Correlation Matrix Report',size=(100,300))
-    elif event=='p2B3':
+    elif event=='p2B3' or event=='p12B1':
         sg.popup_scrolled(cm, title='Correlation Matrix Report',size=(100,300))
-    elif event=='p2B4':
+    elif event=='p2B4' or event== 'p12B2':
         rmv=dm.removeRedundancies(dataTable.redundantAttr)
         if rmv !=None:
             nonRedundantVal=[dataTable.currentAttributeValues[i] for i in range(len(dataTable.currentAttributeValues)) if i not in rmv]
@@ -474,6 +476,25 @@ while True:  # Event Loop
             window['OG_Table'].Widget.configure(displaycolumns=new_headers)
             window['OG_Table'].update(values=display_Records)
         #sg.popup_scrolled(util.textTable(nonRedundantrecords,new_headers),title='Data Table',size=(100,100))
+    elif event=='p12B0':
+        dataTable.CorelationMatrix,dataTable.redundantAttr=dm.IdentifyRedundancies(dataTable.currentAttributeValues[1:],float(values['p12I0']))
+        cm=util.generate_Corelation_Matrix_Report(dataTable,float(values['p12I0']))
+        sg.popup_scrolled(cm, title='Correlation Matrix Report',size=(100,300))
+    elif event=='p12B3':
+        dataTable.currentAttributeValues,dataTable.discretizedRecords,dataTable.initCSeeds=dm2.k_means(dataTable,dataTable.currentAttributeValues,dataTable.currentHeaders)
+        #update table
+        dataTable.currentRecords=dataTable.discretizedRecords
+        display_Records = util.display_Records(dataTable, rmv)
+        window['OG_Table'].update(values=display_Records)
+    elif event=='p12B4':
+        sg.popup_scrolled(dm2.generateClusterTable(dataTable),title="(Cluster) Discrete Value Table",size=(100,100))
+    elif event=='p12B5':
+        dataTable.trainData,dataTable.testData=dm2.tt_split(float(values['p12I3']),dataTable.currentRecords)
+        dataTable.currentAttributeValues=util.record_to_valuesNC(dataTable.trainData)
+        display_Records=util.display_Records(dataTable,rmv)
+    elif event=='p12B6':
+        util.DownloadData(dataTable.trainData,dataTable.currentHeaders,values['p12I1'])     
+        util.DownloadData(dataTable.testData,dataTable.currentHeaders,values['p12I2'])  
     elif event=='p2B6':
         sg.popup_scrolled(dm.generateUnNamedTable(dataTable),title='Unnamed Discrete Value Table',size=(100,300))
     elif event=='p2B7':

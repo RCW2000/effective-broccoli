@@ -31,6 +31,7 @@ class DataTable:
         self.namedDisTbl=None
         self.unNamedDistTbl=None
         self.currentHeaders=self.columnHeaders
+        self.initCSeeds=None
 
 
 def Generate_Table_From_CSV(filepath):
@@ -172,6 +173,14 @@ def record_to_valuesI(record:list):
         attributeValues.append(helperArr)
     return attributeValues
 
+def record_to_valuesNC(record:list):
+    attributeValues=[]
+    for j in range(len( record[0])):
+        helperArr=[]
+        for i in range(len(record)):
+            helperArr.append(record[i][j])
+        attributeValues.append(helperArr)
+    return attributeValues
 def values_to_records(values:list):
     records=[]
     inc=0
