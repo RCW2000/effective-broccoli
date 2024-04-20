@@ -33,6 +33,29 @@ p1_tab=[
         [sg.Button('Show Named Discrete Value Table',key='p2B7')]
     ])]
 ]
+
+#project 2
+p12_tab=[
+    [sg.Frame('Redundancies', layout=[
+        [sg.Text('Enter Correlation Threshold')],
+        [sg.Input(key='p12I0')],
+        [sg.Button('Identify Redundant Attributes',key='p12B0')],
+        [sg.Button('Show Correlation Matrix',key='p12B1')],
+        [sg.Button('Remove Highly Correlated Attributes',key='p12B2')]#removal value
+    ])],
+    [sg.Frame('Discretization', layout=[
+        [sg.Button('Run K-Means Clustering (k=3)',key='p12B3')],
+        [sg.Button('Show Discrete Value Table',key='p12B4')]
+    ])],
+    [sg.Frame('Data Split', layout=[
+        [sg.Text('Enter Training Set Filename')],
+        [sg.Input('Econ-TRAIN.csv',key='p12I1')],
+        [sg.Text('Enter Testing Set Filename')],
+        [sg.Input('Econ-TEST.csv',key='p12I2')],
+        [sg.Button('Run Train/Test Split',key='p12B5')],
+        [sg.Button('Download Data',key='p12B6')]
+    ])]
+]
 #Part2
 
 """
@@ -53,9 +76,6 @@ p2_tab=[
         [sg.Button('Run Train/Test Split',key='p2B0')],
         [sg.Button('Download Data',key='p2B1')]
     ])],
-
-
-
     [sg.Frame('Associations', layout=[
         [sg.Button('Show Identified Frequent Itemsets',key='p2B8')],
         [sg.Button('Clean Itemsets',key='p2B9')], #removal popup
@@ -71,6 +91,19 @@ p2_tab=[
     ])]
 
 ]
+
+#project 2
+p22_tab=[
+    [sg.Frame('Hidden Markov Chain', layout=[
+        [sg.Button('Generate State Diagram',key='p22B0')],
+        [sg.Button('Show Report',key='p22B1')]
+    ])],
+    [sg.Frame('Predictions', layout=[
+        [sg.Text('Enter Dependent Variable')],
+        [sg.Input(key='p22I0')],
+        [sg.Button('Make Predictions',key='p22B2')]
+    ])]
+]
 #Part3
 """
 set dependent variable
@@ -85,14 +118,18 @@ p3_tab=[
     [sg.Frame('Predictions', layout=[
         [sg.Button('Make Predictions',key='p3B2')]
     ])]
-
-
 ]
 
 #The control panel (tab group)
 left=[
     [sg.TabGroup([
         [sg.Tab('Part 1',p1_tab,background_color='CYAN'),sg.Tab('Part 2',p2_tab,background_color='tomato'),sg.Tab('Part 3',p3_tab,background_color='YELLOW')]
+    ])]
+]
+#project2
+p2_left=[
+    [sg.TabGroup([
+        [sg.Tab('Part 1',p12_tab,background_color='CYAN'),sg.Tab('Part 2',p22_tab,background_color='tomato')]
     ])]
 ]
 #anything dealing with data loading, downloading
@@ -103,7 +140,7 @@ show removed values (and itemsets, format 1 rules) + reason why removed
 reset
 """
 top=[
-    [sg.Input(key='tI0', visible=False, enable_events=True),sg.FileBrowse('Load',key='tB0',target='tI0'),sg.Button('Run All',key='rA')]
+    [sg.Input(key='tI0', visible=False, enable_events=True),sg.FileBrowse('Load',key='tB0',target='tI0'),sg.Button('Alternate Steps',key='AltS'),sg.Button('RESET',key='reset')]
 ]
 
 #all tables
@@ -115,19 +152,29 @@ frequent itemsets + removal items, show rules in plain english , format 1 and fo
 prediction (format 1 rules, prediction matrix, correct prediction calculation)
 """
 right=[
-   
-   
     [sg.Col([[sg.Input(visible=False),sg.Input(visible=False)]], key='tds0')]
-
+]
+p2_right=[
+    [sg.Col([[sg.Input(visible=False),sg.Input(visible=False)]], key='tds1')]
 ]
 
 #window
+layout1=[
+    [sg.Column(left,justification='left'),sg.Column(right, element_justification='center',justification='right')],
+    [sg.Button('Run All (Project 1)',key='rA')]
+]
+layout2=[
+    [sg.Column(p2_left,justification='left'),sg.Column(p2_right, element_justification='center',justification='right')],
+    [sg.Button('Run All (Project 2)',key='rA2')]
+]
 layout=[
     [top],
-    [sg.Column(left,justification='left'),sg.Column(right, element_justification='center',justification='right')]
+    [sg.Column(layout1,key='col1'),sg.Column(layout2,visible=False,key='col-1')]
 ]
 window=sg.Window('Datamining Assignment', layout)
-
+layout=1
+table_exists0=False
+table_exists1=False
 #logic
 while True:  # Event Loop
 
@@ -136,6 +183,12 @@ while True:  # Event Loop
 
     if event == sg.WIN_CLOSED or event in ('Close', None):
         break
+    elif event=='AltS':
+        #make current invis
+        window[f'col{layout}'].update(visible=False)
+        layout=layout*-1
+        #make new vis
+        window[f'col{layout}'].update(visible=True)
     elif event == 'rA':
         while True:
             try:
@@ -310,13 +363,36 @@ while True:  # Event Loop
                 break
         else:
             break
-
+    elif event=='reset':
+            if table_exists0==True:
+                window['OG_Table'].Widget.configure(displaycolumns=dataTable.columnHeaders)
+                window['OG_Table'].update(values=dataTable.OriginalRecords)
+                dataTable.currentRecords=dataTable.OriginalRecords
+                dataTable.currentAttributeValues=dataTable.OriginalAttributeValues
+                dataTable.currentHeaders=dataTable.columnHeaders
+            if table_exists1==True: 
+                window['OG_Table'].Widget.configure(displaycolumns=dataTable.columnHeaders)
+                window['OG_Table'].update(values=dataTable.OriginalRecords)
+                dataTable.currentRecords=dataTable.OriginalRecords
+                dataTable.currentAttributeValues=dataTable.OriginalAttributeValues
+                dataTable.currentHeaders=dataTable.columnHeaders      
     elif event=='tI0':
         #create data object
         originalData=util.Generate_Table_From_CSV(values['tB0'])
         dataTable=util.DataTable(originalData)
-        #load figure into original data
-        window.extend_layout(window['tds0'],[[dataTable.OriginalTable]])
+        if table_exists0==False and layout==1:
+            #load figure into original data
+            window.extend_layout(window['tds0'],[[dataTable.OriginalTable]])
+            table_exists0=True
+        elif table_exists1==False and layout ==-1:
+            window.extend_layout(window['tds1'],[[dataTable.OriginalTable]])
+            table_exists1=True
+        else:
+            window['OG_Table'].Widget.configure(displaycolumns=dataTable.columnHeaders)
+            window['OG_Table'].update(values=dataTable.OriginalRecords)
+            dataTable.currentRecords=dataTable.OriginalRecords
+            dataTable.currentAttributeValues=dataTable.OriginalAttributeValues
+            dataTable.currentHeaders=dataTable.columnHeaders
     elif event=='p1B0':
         #identify outliers
         dm.identifyOutliers(dataTable)
