@@ -2,14 +2,14 @@ import util
 import DM_Assignment_1 as dm
 #k means clustering
 def k_meansSeeds(partition_col):
-    small_seed=min(partition_col[1])
-    med_seed=(util.median(partition_col[1]))
-    large_seed=max(partition_col[1])
+    small_seed=min([row[1] for row in partition_col])
+    med_seed=(util.median([row[1] for row in partition_col]))
+    large_seed=max([row[1] for row in partition_col])
     return[small_seed,med_seed,large_seed]
 
 def clustering(part_col,k):
     seeds=k_meansSeeds(part_col)
-    init_seeds=seeds
+    init_seeds=seeds.copy()
     old_cluster=None
     new_cluster=[]
     while new_cluster!=old_cluster:
@@ -104,3 +104,109 @@ def tt_split(percentage,records):
     train=records[:int(len(records)*percentage)]
     test=records[int(len(records)*percentage):]
     return train,test
+
+def BuildMarkov(attributeVals,headers):
+    '''
+    list +text
+    
+    '''
+    print(attributeVals[0][:len(attributeVals[0])-1])
+    cluster_set=["L","M","H"]
+    classv=list(set(attributeVals[0]))
+    classv.sort()
+    class_cts=[attributeVals[0][:len(attributeVals[0])-1].count(cv) for cv in classv]
+    markovList=[]
+    #start
+    ml_helper=[]
+    for i in range(len(classv)):
+        ml_helper.append(['start',classv[i],class_cts[i]/len(attributeVals[0])])
+    markovList.append(ml_helper)
+    #class values
+    for i in range(len(classv)):
+        ml_helper=[]
+        for j in range(len(classv)):
+            ml_helper.append([classv[i],classv[j],sum([1 for k in range(len(attributeVals[0])-2) if attributeVals[0][k]==classv[i] and attributeVals[0][k+1]==classv[j]])/class_cts[i]])
+        markovList.append(ml_helper)
+
+    
+    ml_big=[]
+    #other attributes
+    part_cols=[dm.createPartionColumn(attributeVals[i],attributeVals[0]) for i in range(1,len(attributeVals))]
+    classRNs=[]
+    
+    #emissions
+    ems=[]
+    sems=[]
+    for j in range(len(classv)):
+        totalsms=0
+        for i in range(len(part_cols)):
+            for k in range(len(cluster_set)):
+                emv=0
+                for l in range(len(part_cols[i])):
+                    if part_cols[i][l][1]==cluster_set[k] and part_cols[i][l][2]==classv[j]:
+                        emv+=1
+                totalsms+=emv
+                if emv!=0:
+                    ems.append([headers[i+1],cluster_set[k]])
+                    sems.append([classv[j],headers[i+1],cluster_set[k]])
+        classRNs.append(totalsms)
+   
+    print(classRNs)
+    union=[]
+    union_helper=[union.append(em) for em in ems if em not in union]
+    #propabilities
+    for j in range(len(classv)):
+        for i in range(len(part_cols)):
+            for k in range(len(cluster_set)):
+                emv=0
+                for l in range(len(part_cols[i])):
+                    if part_cols[i][l][1]==cluster_set[k] and part_cols[i][l][2]==classv[j]:
+                        emv+=1
+                if emv!=0:
+                    ems.append([headers[i+1],cluster_set[k]])
+                    sems.append([classv[j],headers[i+1],cluster_set[k]])
+    for i in range(len(part_cols)):
+        for k in range(len(cluster_set)):
+            ml_helper=[]
+            for j in range(len(classv)):
+                emv=0
+                for l in range(len(part_cols[i])):
+                    if part_cols[i][l][1]==cluster_set[k] and part_cols[i][l][2]==classv[j]:
+                        emv+=1
+                if emv/classRNs[j]==0:
+                    ml_helper.append([headers[i+1],cluster_set[k],0.0000005])
+                else:
+                    #print(emv)
+                    ml_helper.append([headers[i+1],cluster_set[k], emv/classRNs[j]])  
+            markovList.append(ml_helper)
+
+    markovTxt=''
+    markovTxt+='States and Their Transistion Probabilities\n\nStates:\nStart\n'
+    for cv in classv:
+        markovTxt+=str(cv)+"\n"
+    markovTxt+='State Transistion Probabilities:\n'
+    for i in range(2):       #start -> class
+        for j in range(len(classv)):
+            markovTxt+='P( '+str(markovList[i][j][1])+' | '+str(markovList[i][j][0])+") = "+str(markovList[i][j][2])+"\n"
+           
+    markovTxt+='\nState Emissions:\n'
+    for i in range(len(sems)):
+        markovTxt+=str(sems[i])+"\n"
+        
+    markovTxt+='\nState Emissions Probabilities:\n'
+    print(markovList)
+    for i in range(2,len(markovList)):
+        for j in range(len(classv)):
+            markovTxt+="P( "+str(markovList[i-2][j][0])+":"+str(markovList[i-2][j][1])+" | "+str(classv[j])+" ) = "+str(markovList[i-2][j][2])+"\n"
+    markovTxt+="\n\nUnion of Emissions:\n"
+    for i in range(len(union)):
+        markovTxt+=str(union[i])+"\n"    
+
+    return markovTxt,markovList
+    
+def MarkovPrediction(markovList,testdata):
+    pedictions=[]
+    actual=[val[0] for val in testdata]
+    for i in range(len(testdata)):
+        for j in range(len(markovList)):
+            print("hellow world")

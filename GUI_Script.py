@@ -526,8 +526,10 @@ while True:  # Event Loop
     elif event=='p3B2':
         predtxt=dm.predict(sr,values['p3I0'],dataTable.testData,dataTable.namedDisTbl,dataTable.columnHeaders)
         sg.popup_scrolled(predtxt, title='prediction ', size=(100, 300))
-    
-        
+    elif event=='p22B0':
+        markovtxt,markovlist=dm2.BuildMarkov(dataTable.currentAttributeValues,dataTable.currentHeaders)
+    elif event=='p22B1':
+        sg.popup_scrolled(markovtxt,title='Hidden Markov Report',size=(100,300))
         
 
 window.close()
