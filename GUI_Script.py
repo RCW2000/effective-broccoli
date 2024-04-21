@@ -530,6 +530,7 @@ while True:  # Event Loop
         markovtxt,markovlist=dm2.BuildMarkov(dataTable.currentAttributeValues,dataTable.currentHeaders)
     elif event=='p22B1':
         sg.popup_scrolled(markovtxt,title='Hidden Markov Report',size=(100,300))
-        
+    elif event=='p22B2':
+        sg.popup_scrolled(dm2.MarkovPrediction(markovlist,dataTable.currentHeaders,dataTable.currentAttributeValues,dataTable.testData),title="Markov Prediction", size=(100,300))
 
 window.close()

@@ -203,10 +203,88 @@ def BuildMarkov(attributeVals,headers):
         markovTxt+=str(union[i])+"\n"    
 
     return markovTxt,markovList
-    
-def MarkovPrediction(markovList,testdata):
-    pedictions=[]
+def markovAttrProb(attrName,ml,attrVal=None):
+    results=[]
+    if attrVal!=None:
+        for i in range(len(ml)):
+            if (attrName in ml[i])==True and (attrVal in ml[i])==True:
+                results.append(ml[i])
+        return results
+    else:
+        for i in range(len(ml)):
+            if (attrName in ml[i]):
+                results.append(ml[i])
+        return results
+def MarkovPrediction(markovList,headers,attrv,testdata):
+    classv=list(set(attrv[0]))
+    predictions=[]
+    paths=[]
     actual=[val[0] for val in testdata]
     for i in range(len(testdata)):
-        for j in range(len(markovList)):
-            print("hellow world")
+        paths_helper=[]
+        for j in range(1,len(testdata[i])):
+            if j==1:
+                #start->1st v
+                start_prob=markovList[0]
+                attr_probs=markovAttrProb(headers[j],markovList,testdata[i][j])
+                #print(len(attr_probs))
+                #pull probs
+                indv=0
+                maxv=0
+                for i in range(len(start_prob)):
+                    if start_prob[i][2] * attr_probs[i][2] > maxv:
+                        maxv=start_prob[i][2] * attr_probs[i][2]
+                        indv=start_prob[i][1]
+                m=maxv
+                ind=classv.index(indv)
+                paths_helper.append(start_prob[ind])
+            else:
+                #check of ind changes
+                ind_probs=markovAttrProb(ind,markovList)
+                attr_probs=markovAttrProb(headers[j],markovList,testdata[i][j])
+                paths_helper.append(attr_probs[ind])
+                attr_prob=attr_probs[ind][2]
+                maxv=0
+                for i in range(len(ind_probs)):
+                    if m * ind_probs[i][2] > maxv:
+                        maxv=m * ind_probs[i][2]*attr_prob
+                        indv=ind_probs[i][1]
+                m=maxv
+                ind=classv.index(indv)
+        predictions.append(indv)
+        paths.append(paths_helper)
+        
+        
+        correct=[]
+        incorrect=[]
+
+        for i in range(len(predictions)):
+            if predictions[i]==actual[i]:
+                correct.append(predictions[i])
+            else:
+                incorrect.append(predictions[i])
+
+        corr_cts=[correct.count(classv[i]) for i in range(len(classv))]
+        incorr_cts=[incorrect.count(classv[i]) for i in range(len(classv))]
+        total_corr=len(correct)
+        percent_corrPred=((corr_cts[0]+incorr_cts[0])*100)/len(testdata)
+        pred_matrix=''
+        pred_matrix+="Total Corect: "+str(total_corr)+" ("+str(100*(total_corr/len(testdata)))+"%)\n"
+        pred_matrix+=str(classv)
+        for i in range(len(predictions)):
+           
+            for j in range(len(classv)):
+                pred_matrix+=str(classv[j])+"   "
+                if j==0:
+                    pred_matrix+=str(corr_cts[j])+"   "+str(incorr_cts[j])+"\n"
+                else:
+                    pred_matrix+=str(incorr_cts[j])+"   "+str(corr_cts[j])+"\n"
+
+        pred_matrix+="\nPaths:\n"
+        for i in range(len(paths)):
+            for j in range(len(paths[i])):
+                pred_matrix+=str(paths[i][j][0])+"->"
+            pred_matrix+=str(predictions[i])+"\n"
+    return pred_matrix
+        
+                
