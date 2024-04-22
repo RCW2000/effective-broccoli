@@ -207,13 +207,17 @@ def markovAttrProb(attrName,ml,attrVal=None):
     results=[]
     if attrVal!=None:
         for i in range(len(ml)):
-            if (attrName in ml[i])==True and (attrVal in ml[i])==True:
-                results.append(ml[i])
+            for j in range(len(ml[i])):
+                if (attrName in ml[i][j])==True and (attrVal in ml[i][j])==True:
+                    results.append(ml[i][j])
+        #print(results)       
         return results
     else:
         for i in range(len(ml)):
-            if (attrName in ml[i]):
-                results.append(ml[i])
+            for j in range(len(ml[i])):
+                if (attrName in ml[i][j]):
+                    results.append(ml[i][j])
+        #print(results)  
         return results
 def MarkovPrediction(markovList,headers,attrv,testdata):
     classv=list(set(attrv[0]))
@@ -270,20 +274,20 @@ def MarkovPrediction(markovList,headers,attrv,testdata):
         percent_corrPred=((corr_cts[0]+incorr_cts[0])*100)/len(testdata)
         pred_matrix=''
         pred_matrix+="Total Corect: "+str(total_corr)+" ("+str(100*(total_corr/len(testdata)))+"%)\n"
-        pred_matrix+=str(classv)
-        for i in range(len(predictions)):
-           
-            for j in range(len(classv)):
-                pred_matrix+=str(classv[j])+"   "
-                if j==0:
-                    pred_matrix+=str(corr_cts[j])+"   "+str(incorr_cts[j])+"\n"
-                else:
-                    pred_matrix+=str(incorr_cts[j])+"   "+str(corr_cts[j])+"\n"
+        pred_matrix+=str(classv)+"\n"
+        
+        for j in range(len(classv)):
+            pred_matrix+=str(classv[j])+"   "
+            if j==0:
+                pred_matrix+=str(corr_cts[j])+"   "+str(incorr_cts[j])+"\n"
+            else:
+                pred_matrix+=str(incorr_cts[j])+"   "+str(corr_cts[j])+"\n"
 
         pred_matrix+="\nPaths:\n"
+        #print(paths)
         for i in range(len(paths)):
             for j in range(len(paths[i])):
-                pred_matrix+=str(paths[i][j][0])+"->"
+                pred_matrix+=str(paths[i][j][0])+":"+str(paths[i][j][1])+"->"
             pred_matrix+=str(predictions[i])+"\n"
     return pred_matrix
         

@@ -101,8 +101,6 @@ p22_tab=[
         [sg.Button('Show Report',key='p22B1')]
     ])],
     [sg.Frame('Predictions', layout=[
-        [sg.Text('Enter Dependent Variable')],
-        [sg.Input(key='p22I0')],
         [sg.Button('Make Predictions',key='p22B2')]
     ])]
 ]
@@ -166,8 +164,7 @@ layout1=[
     [sg.Button('Run All (Project 1)',key='rA')]
 ]
 layout2=[
-    [sg.Column(p2_left,justification='left'),sg.Column(p2_right, element_justification='center',justification='right')],
-    [sg.Button('Run All (Project 2)',key='rA2')]
+    [sg.Column(p2_left,justification='left'),sg.Column(p2_right, element_justification='center',justification='right')]
 ]
 layout=[
     [top],
